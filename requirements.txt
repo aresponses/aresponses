@@ -1,0 +1,14 @@
+# dev/testing requirements
+pytest
+pytest-asyncio
+pydocstyle
+pylint
+pylama
+pylama_pylint
+tox
+coverage
+responses
+
+# install setup.py
+aiohttp
+-e .
