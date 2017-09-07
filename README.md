@@ -7,6 +7,7 @@ an asyncio testing server for mocking external services
  - allows mocking some types of network issues
  - use regular expression matching for domain, path, or method 
  - works with https requests as well (by switching them to http requests)
+ - works with callables
  
 ## Usage
 
@@ -21,31 +22,51 @@ Requires Python 3.6 or greater.
 ## Example
 ```python
 import pytest
-from aresponses import aresponses
-from aiohttp import web
+import aiohttp
 
 @pytest.mark.asyncio
-async def test_bad_redirect(aresponses):
-    aresponses.add('foo.com', '/', 'get', web.Response(text='hi', status=200))
-    aresponses.add('foo.com', '/', 'get', web.Response(text='hi', status=301))
+async def test_foo(aresponses):
+    aresponses.add('foo.com', '/', 'get', 'hi there!!')
+    aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
     
     url = 'http://foo.com'
     async with aiohttp.ClientSession(loop=event_loop) as session:
         async with session.get(url) as response:
             text = await response.text()
-        print(text)  # 'hi'
+            print(text)  # 'hi'
         
         async with session.get(url) as response:
             # exception thrown about improper redirect
             text = await response.text()
-        
-        
     
 ```
 
+```python
+import aiohttp
+import pytest
+import aresponses
+
+@pytest.mark.asyncio
+async def test_foo(event_loop):
+    with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
+        arsps.add('foo.com', '/', 'get', 'hi there!!')
+        arsps.add(arsps.ANY, '/', 'get', arsps.Response(text='hey!'))
+        
+        async with aiohttp.ClientSession(loop=event_loop) as session:
+            async with session.get('http://foo.com') as response:
+                text = await response.text()
+                assert text == 'hi'
+            
+            async with session.get('https://google.com') as response:
+                # exception thrown about improper redirect
+                text = await response.text()
+                assert text == 'hey!'
+        
+```
+
+
 ## Todo
  - add passthrough option
- - make api identical to `responses`
  - allow response to be a function handler
  - request capture mode?
  - better story about how exceptions are handled

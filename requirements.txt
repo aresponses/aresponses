@@ -7,8 +7,6 @@ pylama
 pylama_pylint
 tox
 coverage
-responses
 
 # install setup.py
-aiohttp
 -e .
