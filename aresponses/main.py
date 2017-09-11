@@ -33,15 +33,15 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         return self._find_response(request)
 
-    def add(self, host_pattern, path_pattern, method_pattern, response):
-        if isinstance(host_pattern, str):
-            host_pattern = host_pattern.lower()
+    def add(self, host, path=ANY, method=ANY, response=''):
+        if isinstance(host, str):
+            host = host.lower()
 
-        if isinstance(method_pattern, str):
-            method_pattern = method_pattern.lower()
+        if isinstance(method, str):
+            method = method.lower()
 
-        self._host_patterns.add(host_pattern)
-        self._responses.append((host_pattern, path_pattern, method_pattern, response))
+        self._host_patterns.add(host)
+        self._responses.append((host, path, method, response))
 
     def _host_matches(self, match_host):
         match_host = match_host.lower()
@@ -55,19 +55,22 @@ class ResponsesMockServer(BaseTestServer):
         host, path, method = request.host, request.path, request.method
         logger.info(f'Looking for match for {host} {path} {method}')
         i = 0
+        host_matched = False
+        path_matched = False
         for host_pattern, path_pattern, method_pattern, response in self._responses:
             if _text_matches_pattern(host_pattern, host):
+                host_matched = True
                 if _text_matches_pattern(path_pattern, path):
+                    path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
                         if callable(response):
                             return response(request)
                         elif isinstance(response, str):
-                            return web.Response(body=response)
+                            return self.Response(body=response)
                         return response
             i += 1
-        self._exception = Exception(f"No Match found for {host} {path} {method}")
-        # pytest.fail(str(self._exception))
+        self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
         self._loop.stop()
         raise self._exception  # noqa
 
