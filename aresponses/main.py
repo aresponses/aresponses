@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import pytest
@@ -31,7 +32,7 @@ class ResponsesMockServer(BaseTestServer):
         return
 
     async def _handler(self, request):
-        return self._find_response(request)
+        return await self._find_response(request)
 
     def add(self, host, path=ANY, method=ANY, response=''):
         if isinstance(host, str):
@@ -51,7 +52,7 @@ class ResponsesMockServer(BaseTestServer):
 
         return False
 
-    def _find_response(self, request):
+    async def _find_response(self, request):
         host, path, method = request.host, request.path, request.method
         logger.info(f'Looking for match for {host} {path} {method}')
         i = 0
@@ -65,6 +66,8 @@ class ResponsesMockServer(BaseTestServer):
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
                         if callable(response):
+                            if asyncio.iscoroutinefunction(response):
+                                return await response(request)
                             return response(request)
                         elif isinstance(response, str):
                             return self.Response(body=response)
