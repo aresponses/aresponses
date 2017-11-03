@@ -1,6 +1,6 @@
 from setuptools import setup
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 setup(
     name="aresponses",
@@ -15,5 +15,5 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.6",
     ],
-    install_requires=['aiohttp'],
+    install_requires=['aiohttp', 'pytest-asyncio'],
 )
