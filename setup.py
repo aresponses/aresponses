@@ -1,6 +1,6 @@
 from setuptools import setup
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 
 setup(
     name="aresponses",
@@ -16,4 +16,10 @@ setup(
         "Programming Language :: Python :: 3.6",
     ],
     install_requires=['aiohttp', 'pytest-asyncio'],
+    # the following makes a plugin available to pytest
+    entry_points = {
+        'pytest11': [
+            'name_of_plugin = aresponses.main',
+        ]
+    },
 )
