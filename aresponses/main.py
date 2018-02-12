@@ -7,6 +7,7 @@ from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
 from aiohttp.helpers import sentinel
 from aiohttp.test_utils import BaseTestServer
+from aiohttp.web_runner import ServerRunner
 from aiohttp.web_server import Server
 
 from aresponses.utils import _text_matches_pattern, ANY
@@ -24,9 +25,10 @@ class ResponsesMockServer(BaseTestServer):
         self._exception = None
         super().__init__(scheme=scheme, host=host, **kwargs)
 
-    async def _make_factory(self, debug=True, **kwargs):
-        self.handler = Server(self._handler, loop=self._loop, debug=True, **kwargs)
-        return self.handler
+    async def _make_runner(self, debug=True, **kwargs):
+        srv = Server(
+            self._handler, loop=self._loop, debug=True, **kwargs)
+        return ServerRunner(srv, debug=debug, **kwargs)
 
     async def _close_hook(self):
         return
@@ -82,7 +84,7 @@ class ResponsesMockServer(BaseTestServer):
 
         self._old_resolver_mock = TCPConnector._resolve_host
 
-        async def _resolver_mock(_self, host, port):
+        async def _resolver_mock(_self, host, port, traces=None):
             return [{
                 'hostname': host, 'host': '127.0.0.1', 'port': self.port,
                 'family': _self._family, 'proto': 0, 'flags': 0
@@ -94,7 +96,7 @@ class ResponsesMockServer(BaseTestServer):
 
         def new_update_host(_self, *args, **kwargs):
             val = self._old_update_host(_self, *args, **kwargs)
-            _self.ssl = False
+            _self._ssl = False
             return val
 
         ClientRequest.update_host = new_update_host

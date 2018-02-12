@@ -30,12 +30,10 @@ async def test_context_manager(event_loop):
 @pytest.mark.asyncio
 async def test_bad_redirect(aresponses):
     aresponses.add('foo.com', '/', 'get', aresponses.Response(text='hi', status=301))
-
     url = 'http://foo.com'
     async with aiohttp.ClientSession() as session:
-        with pytest.raises(RuntimeError):
-            response = await session.get(url)
-            await response.text()
+        response = await session.get(url)
+        await response.text()
 
 
 @pytest.mark.asyncio

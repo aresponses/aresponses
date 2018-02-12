@@ -7,3 +7,4 @@ __pycache___
 dist/
 build/
 .tox
+**/__pycache__
