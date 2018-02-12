@@ -15,9 +15,9 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.6",
     ],
-    install_requires=['aiohttp', 'pytest-asyncio'],
+    install_requires=['aiohttp==3.*', 'pytest-asyncio'],
     # the following makes a plugin available to pytest
-    entry_points = {
+    entry_points={
         'pytest11': [
             'name_of_plugin = aresponses.main',
         ]
