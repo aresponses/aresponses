@@ -92,19 +92,17 @@ class ResponsesMockServer(BaseTestServer):
 
         TCPConnector._resolve_host = _resolver_mock
 
-        self._old_update_host = ClientRequest.update_host
+        self._old_is_ssl = ClientRequest.is_ssl
 
-        def new_update_host(_self, *args, **kwargs):
-            val = self._old_update_host(_self, *args, **kwargs)
-            _self._ssl = False
-            return val
+        def new_is_ssl(_self):
+            return False
 
-        ClientRequest.update_host = new_update_host
+        ClientRequest.is_ssl = new_is_ssl
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         TCPConnector._resolve_host = self._old_resolver_mock
-        ClientRequest.update_host = self._old_update_host
+        ClientRequest.is_ssl = self._old_is_ssl
 
         await self.close()
         if self._exception:
