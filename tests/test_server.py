@@ -16,6 +16,17 @@ async def test_fixture(aresponses):
 
 
 @pytest.mark.asyncio
+async def test_https(aresponses):
+    aresponses.add('foo.com', '/', 'get', aresponses.Response(text='hi'))
+
+    url = 'https://foo.com'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'hi'
+
+
+@pytest.mark.asyncio
 async def test_context_manager(event_loop):
     async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
         arsps.add('foo.com', '/', 'get', aresponses.Response(text='hi'))
