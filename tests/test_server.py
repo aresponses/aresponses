@@ -78,3 +78,18 @@ async def test_callable(aresponses):
         async with session.get('http://bar.com') as response:
             text = await response.text()
             assert text == 'bar.com'
+
+
+@pytest.mark.asyncio
+async def test_raw_response(aresponses):
+    raw_response = b"""HTTP/1.1 200 OK\r
+Date: Tue, 26 Dec 2017 05:47:50 GMT
+\r
+<html><body><h1>It works!</h1></body></html>
+"""
+    aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.RawResponse(raw_response))
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get('http://foo.com') as response:
+            text = await response.text()
+            assert 'It works!' in text

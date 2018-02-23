@@ -1,6 +1,7 @@
 # dev/testing requirements
 pytest
 pytest-asyncio
+pytest-xdist
 pydocstyle
 pylint
 pylama
