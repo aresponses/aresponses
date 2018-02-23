@@ -7,6 +7,7 @@ from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
 from aiohttp.helpers import sentinel
 from aiohttp.test_utils import BaseTestServer
+from aiohttp.web_response import StreamResponse
 from aiohttp.web_runner import ServerRunner
 from aiohttp.web_server import Server
 
@@ -15,9 +16,31 @@ from aresponses.utils import _text_matches_pattern, ANY
 logger = logging.getLogger(__name__)
 
 
+class RawResponse(StreamResponse):
+    """
+    Allow complete control over the response
+
+    Useful for mocking invalid responses
+    """
+
+    def __init__(self, body):
+        super().__init__()
+        self._body = body
+
+    def _start(self, request):
+        self._req = request
+        self._keep_alive = False
+        writer = self._payload_writer = request._payload_writer
+        return writer
+
+    async def write_eof(self):
+        await super().write_eof(self._body)
+
+
 class ResponsesMockServer(BaseTestServer):
     ANY = ANY
     Response = web.Response
+    RawResponse = RawResponse
 
     def __init__(self, *, scheme=sentinel, host='127.0.0.1', **kwargs):
         self._responses = []
