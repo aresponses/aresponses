@@ -27,13 +27,13 @@ class RawResponse(StreamResponse):
         super().__init__()
         self._body = body
 
-    def _start(self, request):
+    async def _start(self, request, *_, **__):
         self._req = request
         self._keep_alive = False
         writer = self._payload_writer = request._payload_writer
         return writer
 
-    async def write_eof(self):
+    async def write_eof(self, *_, **__):
         await super().write_eof(self._body)
 
 
