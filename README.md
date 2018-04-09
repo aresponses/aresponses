@@ -48,7 +48,7 @@ import aresponses
 
 @pytest.mark.asyncio
 async def test_foo(event_loop):
-    with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
+    async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
         arsps.add('foo.com', '/', 'get', 'hi there!!')
         arsps.add(arsps.ANY, '/', 'get', arsps.Response(text='hey!'))
         
