@@ -133,7 +133,7 @@ class ResponsesMockServer(BaseTestServer):
             raise self._exception  # noqa
 
 
-@pytest.yield_fixture
+@pytest.fixture
 async def aresponses(event_loop):
     async with ResponsesMockServer(loop=event_loop) as server:
         yield server
