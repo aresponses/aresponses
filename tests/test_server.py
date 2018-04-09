@@ -112,3 +112,28 @@ async def test_querystring(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == 'hi'
+
+
+@pytest.mark.asyncio
+async def test_querystring_not_match(aresponses):
+    aresponses.add('foo.com', '/path', 'get', aresponses.Response(text='hi'), match_querystring=True)
+    aresponses.add('foo.com', aresponses.ANY, 'get', aresponses.Response(text='miss'), match_querystring=True)
+    aresponses.add('foo.com', aresponses.ANY, 'get', aresponses.Response(text='miss'), match_querystring=True)
+
+    url = 'http://foo.com/path?reply=42'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'miss'
+
+    url = 'http://foo.com/path?reply=43'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'miss'
+
+    url = 'http://foo.com/path'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'hi'
