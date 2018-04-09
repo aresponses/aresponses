@@ -93,3 +93,22 @@ Date: Tue, 26 Dec 2017 05:47:50 GMT
         async with session.get('http://foo.com') as response:
             text = await response.text()
             assert 'It works!' in text
+
+
+@pytest.mark.asyncio
+async def test_querystring(aresponses):
+    aresponses.add('foo.com', '/path', 'get', aresponses.Response(text='hi'))
+
+    url = 'http://foo.com/path?reply=42'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'hi'
+
+    aresponses.add('foo.com', '/path2?reply=42', 'get', aresponses.Response(text='hi'), match_querystring=True)
+
+    url = 'http://foo.com/path2?reply=42'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == 'hi'
