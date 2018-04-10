@@ -59,7 +59,7 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         return await self._find_response(request)
 
-    def add(self, host, path=ANY, method=ANY, response=''):
+    def add(self, host, path=ANY, method=ANY, response='', match_querystring=False):
         if isinstance(host, str):
             host = host.lower()
 
@@ -67,7 +67,7 @@ class ResponsesMockServer(BaseTestServer):
             method = method.lower()
 
         self._host_patterns.add(host)
-        self._responses.append((host, path, method, response))
+        self._responses.append((host, path, method, response, match_querystring))
 
     def _host_matches(self, match_host):
         match_host = match_host.lower()
@@ -78,15 +78,16 @@ class ResponsesMockServer(BaseTestServer):
         return False
 
     async def _find_response(self, request):
-        host, path, method = request.host, request.path, request.method
+        host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f'Looking for match for {host} {path} {method}')
         i = 0
         host_matched = False
         path_matched = False
-        for host_pattern, path_pattern, method_pattern, response in self._responses:
+        for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
             if _text_matches_pattern(host_pattern, host):
                 host_matched = True
-                if _text_matches_pattern(path_pattern, path):
+                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or\
+                   (match_querystring and _text_matches_pattern(path_pattern, path_qs)):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
