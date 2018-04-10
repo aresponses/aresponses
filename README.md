@@ -1,4 +1,4 @@
-<a href="https://travis-ci.org/CircleUp/aresponses"><img src="https://travis-ci.org/CircleUp/aresponses.svg"/></a>
+[![build status](https://travis-ci.org/CircleUp/aresponses.svg)](https://travis-ci.org/CircleUp/aresponses)
 
 # aresponses
 
