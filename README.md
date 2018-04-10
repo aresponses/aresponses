@@ -94,7 +94,14 @@ async def test_foo(event_loop):
     python setup.py bdist_wheel
     python setup.py sdist
     twine upload dist/* -u username
-    
+
+## Changelog
+
+#### 1.0.0
+
+- Added an optional `match_querystring` argument that lets you match on querystring as well
+
+
 ## Contributors
 Bryce Drennan, CircleUp <aresponses@brycedrennan.com>
 Marco Castelluccio, Mozilla <mcastelluccio@mozilla.com>
