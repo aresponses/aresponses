@@ -1,3 +1,5 @@
+[![build status](https://travis-ci.org/CircleUp/aresponses.svg)](https://travis-ci.org/CircleUp/aresponses)
+
 # aresponses
 
 an asyncio testing server for mocking external services
@@ -103,5 +105,6 @@ async def test_foo(event_loop):
 
 
 ## Contributors
-Bryce Drennan, CircleUp <aresponses@brycedrennan.com>
-Marco Castelluccio, Mozilla <mcastelluccio@mozilla.com>
+* Bryce Drennan, CircleUp <aresponses@brycedrennan.com>
+* Marco Castelluccio, Mozilla <mcastelluccio@mozilla.com>
+* Jesse Vogt, CircleUp <jesse.vogt@gmail.com>
