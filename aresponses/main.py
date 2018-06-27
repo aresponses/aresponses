@@ -1,7 +1,9 @@
 import asyncio
+from functools import partial
 import logging
 
 import pytest
+import aiohttp
 from aiohttp import web
 from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
@@ -35,6 +37,10 @@ class RawResponse(StreamResponse):
 
     async def write_eof(self, *_, **__):
         await super().write_eof(self._body)
+
+
+class PassThrough:
+    pass
 
 
 class ResponsesMockServer(BaseTestServer):
@@ -90,7 +96,33 @@ class ResponsesMockServer(BaseTestServer):
                    (match_querystring and _text_matches_pattern(path_pattern, path_qs)):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
+                        if response is PassThrough:
+                            connector = TCPConnector()
+                            connector._resolve_host = partial(self._old_resolver_mock, connector)
+
+                            new_is_ssl = ClientRequest.is_ssl
+                            ClientRequest.is_ssl = self._old_is_ssl
+                            try:
+                                original_request = request.clone(
+                                    scheme='https' if request.headers['AResponsesIsSSL'] else 'http')
+
+                                headers = {k: v for k, v in request.headers.items() if k != 'AResponsesIsSSL'}
+
+                                async with aiohttp.ClientSession(connector=connector) as session:
+                                    async with getattr(session, method.lower())(
+                                        original_request.url, headers=headers,
+                                        data=(await request.read())
+                                    ) as r:
+                                        headers = {k: v for k, v in r.headers.items() if k.lower() == 'content-type'}
+                                        text = await r.text()
+                                        response = self.Response(
+                                            text=text, status=r.status, headers=headers)
+                                        return response
+                            finally:
+                                ClientRequest.is_ssl = new_is_ssl
+
                         del self._responses[i]
+
                         if callable(response):
                             if asyncio.iscoroutinefunction(response):
                                 return await response(request)
@@ -122,6 +154,17 @@ class ResponsesMockServer(BaseTestServer):
             return False
 
         ClientRequest.is_ssl = new_is_ssl
+
+        self._old_init = ClientRequest.__init__
+
+        def new_init(_self, *largs, **kwargs):
+            self._old_init(_self, *largs, **kwargs)
+
+            is_ssl = '1' if self._old_is_ssl(_self) else ''
+            _self.update_headers({**_self.headers, 'AResponsesIsSSL': is_ssl})
+
+        ClientRequest.__init__ = new_init
+
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
