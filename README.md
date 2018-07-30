@@ -69,7 +69,6 @@ async def test_foo(event_loop):
 
 ## Todo
  - add passthrough option
- - allow response to be a function handler
  - request capture mode?
  - better story about how exceptions are handled
 
