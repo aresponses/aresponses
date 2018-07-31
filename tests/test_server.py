@@ -4,6 +4,44 @@ import pytest
 import aresponses
 
 
+# example test in readme.md
+@pytest.mark.asyncio
+async def test_foo(aresponses):
+    # text as response (defaults to status 200 response)
+    aresponses.add('foo.com', '/', 'get', 'hi there!!')
+
+    # custom status code response
+    aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
+
+    # passthrough response (makes an actual network call)
+    aresponses.add('httpstat.us', '/200', 'get', aresponses.passthrough)
+
+    # custom handler response
+    def my_handler(request):
+        return aresponses.Response(status=200, text=str(request.url))
+
+    aresponses.add('foo.com', '/', 'get', my_handler)
+
+    url = 'http://foo.com'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+            assert text == 'hi there!!'
+
+        async with session.get(url) as response:
+            text = await response.text()
+            assert text == 'error'
+            assert response.status == 500
+
+        async with session.get('https://httpstat.us/200') as response:
+            text = await response.text()
+        assert text == '200 OK'
+
+        async with session.get(url) as response:
+            text = await response.text()
+            assert text == 'http://foo.com/'
+
+
 @pytest.mark.asyncio
 async def test_fixture(aresponses):
     aresponses.add('foo.com', '/', 'get', aresponses.Response(text='hi'))
@@ -137,3 +175,14 @@ async def test_querystring_not_match(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == 'hi'
+
+
+@pytest.mark.asyncio
+async def test_passthrough(aresponses):
+    aresponses.add('httpstat.us', '/200', 'get', aresponses.passthrough)
+
+    url = 'https://httpstat.us/200'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == '200 OK'

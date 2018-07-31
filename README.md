@@ -28,19 +28,39 @@ import aiohttp
 
 @pytest.mark.asyncio
 async def test_foo(aresponses):
+    # text as response (defaults to status 200 response)
     aresponses.add('foo.com', '/', 'get', 'hi there!!')
+
+    # custom status code response
     aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
-    
+
+    # passthrough response (makes an actual network call)
+    aresponses.add('httpstat.us', '/200', 'get', aresponses.passthrough)
+
+    # custom handler response
+    def my_handler(request):
+        return aresponses.Response(status=200, text=str(request.url))
+
+    aresponses.add('foo.com', '/', 'get', my_handler)
+
     url = 'http://foo.com'
-    async with aiohttp.ClientSession(loop=event_loop) as session:
+    async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             text = await response.text()
-            print(text)  # 'hi'
-        
+            assert text == 'hi there!!'
+
         async with session.get(url) as response:
-            # exception thrown about improper redirect
             text = await response.text()
-    
+            assert text == 'error'
+            assert response.status == 500
+
+        async with session.get('https://httpstat.us/200') as response:
+            text = await response.text()
+        assert text == '200 OK'
+
+        async with session.get(url) as response:
+            text = await response.text()
+            assert text == 'http://foo.com/'
 ```
 
 ```python
@@ -60,18 +80,11 @@ async def test_foo(event_loop):
                 assert text == 'hi'
             
             async with session.get('https://google.com') as response:
-                # exception thrown about improper redirect
                 text = await response.text()
                 assert text == 'hey!'
         
 ```
 
-
-## Todo
- - add passthrough option
- - allow response to be a function handler
- - request capture mode?
- - better story about how exceptions are handled
 
 ## Contributing
 
@@ -99,6 +112,10 @@ async def test_foo(event_loop):
 
 ## Changelog
 
+#### 1.1.0
+- Added passthrough option to permit live network calls
+- Added example of using a callable as a response
+
 #### 1.0.0
 
 - Added an optional `match_querystring` argument that lets you match on querystring as well
@@ -108,3 +125,4 @@ async def test_foo(event_loop):
 * Bryce Drennan, CircleUp <aresponses@brycedrennan.com>
 * Marco Castelluccio, Mozilla <mcastelluccio@mozilla.com>
 * Jesse Vogt, CircleUp <jesse.vogt@gmail.com>
+* [p4l1ly](https://github.com/p4l1ly)

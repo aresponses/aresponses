@@ -38,10 +38,6 @@ class RawResponse(StreamResponse):
         await super().write_eof(self._body)
 
 
-class PassThrough(object):
-    pass
-
-
 class ResponsesMockServer(BaseTestServer):
     ANY = ANY
     Response = web.Response
@@ -97,9 +93,7 @@ class ResponsesMockServer(BaseTestServer):
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
 
-                        if response is PassThrough:
-                            return await self.make_real_request(request)
-                        elif callable(response):
+                        if callable(response):
                             if asyncio.iscoroutinefunction(response):
                                 return await response(request)
                             return response(request)
@@ -111,7 +105,7 @@ class ResponsesMockServer(BaseTestServer):
         self._loop.stop()
         raise self._exception  # noqa
 
-    async def make_network_request(self, request):
+    async def passthrough(self, request):
         """Make non-mocked network request"""
         connector = TCPConnector()
         connector._resolve_host = partial(self._old_resolver_mock, connector)
@@ -119,8 +113,7 @@ class ResponsesMockServer(BaseTestServer):
         new_is_ssl = ClientRequest.is_ssl
         ClientRequest.is_ssl = self._old_is_ssl
         try:
-            original_request = request.clone(
-                scheme='https' if request.headers['AResponsesIsSSL'] else 'http')
+            original_request = request.clone(scheme='https' if request.headers['AResponsesIsSSL'] else 'http')
 
             headers = {k: v for k, v in request.headers.items() if k != 'AResponsesIsSSL'}
 
@@ -131,8 +124,7 @@ class ResponsesMockServer(BaseTestServer):
                 ) as r:
                     headers = {k: v for k, v in r.headers.items() if k.lower() == 'content-type'}
                     text = await r.text()
-                    response = self.Response(
-                        text=text, status=r.status, headers=headers)
+                    response = self.Response(text=text, status=r.status, headers=headers)
                     return response
         finally:
             ClientRequest.is_ssl = new_is_ssl

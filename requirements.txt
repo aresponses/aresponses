@@ -1,5 +1,5 @@
 # dev/testing requirements
-pytest
+pytest==3.6.4
 pytest-asyncio
 pytest-xdist
 pydocstyle

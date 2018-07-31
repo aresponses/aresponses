@@ -1,2 +1,2 @@
 from aiohttp.web import Response  # noqa
-from aresponses.main import aresponses, PassThrough, ResponsesMockServer
+from aresponses.main import aresponses, ResponsesMockServer
