@@ -1,8 +1,9 @@
 import asyncio
 import logging
+from functools import partial
 
 import pytest
-from aiohttp import web
+from aiohttp import web, ClientSession
 from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
 from aiohttp.helpers import sentinel
@@ -86,11 +87,12 @@ class ResponsesMockServer(BaseTestServer):
         for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
             if _text_matches_pattern(host_pattern, host):
                 host_matched = True
-                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or\
-                   (match_querystring and _text_matches_pattern(path_pattern, path_qs)):
+                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or \
+                        (match_querystring and _text_matches_pattern(path_pattern, path_qs)):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
+
                         if callable(response):
                             if asyncio.iscoroutinefunction(response):
                                 return await response(request)
@@ -102,6 +104,30 @@ class ResponsesMockServer(BaseTestServer):
         self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
         self._loop.stop()
         raise self._exception  # noqa
+
+    async def passthrough(self, request):
+        """Make non-mocked network request"""
+        connector = TCPConnector()
+        connector._resolve_host = partial(self._old_resolver_mock, connector)
+
+        new_is_ssl = ClientRequest.is_ssl
+        ClientRequest.is_ssl = self._old_is_ssl
+        try:
+            original_request = request.clone(scheme='https' if request.headers['AResponsesIsSSL'] else 'http')
+
+            headers = {k: v for k, v in request.headers.items() if k != 'AResponsesIsSSL'}
+
+            async with ClientSession(connector=connector) as session:
+                async with getattr(session, request.method.lower())(
+                        original_request.url, headers=headers,
+                        data=(await request.read())
+                ) as r:
+                    headers = {k: v for k, v in r.headers.items() if k.lower() == 'content-type'}
+                    text = await r.text()
+                    response = self.Response(text=text, status=r.status, headers=headers)
+                    return response
+        finally:
+            ClientRequest.is_ssl = new_is_ssl
 
     async def __aenter__(self):
         await self.start_server(loop=self._loop)
@@ -122,6 +148,18 @@ class ResponsesMockServer(BaseTestServer):
             return False
 
         ClientRequest.is_ssl = new_is_ssl
+
+        # store whether a request was an SSL request in the `AResponsesIsSSL` header
+        self._old_init = ClientRequest.__init__
+
+        def new_init(_self, *largs, **kwargs):
+            self._old_init(_self, *largs, **kwargs)
+
+            is_ssl = '1' if self._old_is_ssl(_self) else ''
+            _self.update_headers({**_self.headers, 'AResponsesIsSSL': is_ssl})
+
+        ClientRequest.__init__ = new_init
+
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
