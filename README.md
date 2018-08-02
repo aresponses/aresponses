@@ -125,4 +125,4 @@ async def test_foo(event_loop):
 * Bryce Drennan, CircleUp <aresponses@brycedrennan.com>
 * Marco Castelluccio, Mozilla <mcastelluccio@mozilla.com>
 * Jesse Vogt, CircleUp <jesse.vogt@gmail.com>
-* [p4l1ly](https://github.com/p4l1ly)
+* Pavol Vargovcik, Kiwi.com <pavol.vargovcik@gmail.com>
