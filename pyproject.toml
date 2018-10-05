@@ -1,0 +1,15 @@
+[tool.black]
+line-length = 160
+py36 = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \.venv
+  | \.direnv
+  | build
+  | dist
+  | aresponses\.egg-info
+)/
+'''

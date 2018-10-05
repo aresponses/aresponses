@@ -8,6 +8,7 @@ pylava
 pylava-pylint
 tox
 coverage
+black==18.9b0
 
 # install setup.py
 -e .
