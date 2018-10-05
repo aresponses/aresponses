@@ -4,8 +4,8 @@ pytest-asyncio
 pytest-xdist
 pydocstyle
 pylint
-pylama
-pylama_pylint
+pylava
+pylava-pylint
 tox
 coverage
 

@@ -100,7 +100,7 @@ async def test_foo(event_loop):
   - **`git checkout -b my-feature-branch`** 
   - **make some cool changes**
   - **`pytest`** - do the tests pass?
-  - **`pylama`** - is the code linter happy?
+  - **`pylava`** - is the code linter happy?
   - **create pull request**
 
 ### Updating package on pypi
