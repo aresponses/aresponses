@@ -43,15 +43,14 @@ class ResponsesMockServer(BaseTestServer):
     Response = web.Response
     RawResponse = RawResponse
 
-    def __init__(self, *, scheme=sentinel, host='127.0.0.1', **kwargs):
+    def __init__(self, *, scheme=sentinel, host="127.0.0.1", **kwargs):
         self._responses = []
         self._host_patterns = set()
         self._exception = None
         super().__init__(scheme=scheme, host=host, **kwargs)
 
     async def _make_runner(self, debug=True, **kwargs):
-        srv = Server(
-            self._handler, loop=self._loop, debug=True, **kwargs)
+        srv = Server(self._handler, loop=self._loop, debug=True, **kwargs)
         return ServerRunner(srv, debug=debug, **kwargs)
 
     async def _close_hook(self):
@@ -60,7 +59,7 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         return await self._find_response(request)
 
-    def add(self, host, path=ANY, method=ANY, response='', match_querystring=False):
+    def add(self, host, path=ANY, method=ANY, response="", match_querystring=False):
         if isinstance(host, str):
             host = host.lower()
 
@@ -80,15 +79,16 @@ class ResponsesMockServer(BaseTestServer):
 
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
-        logger.info(f'Looking for match for {host} {path} {method}')
+        logger.info(f"Looking for match for {host} {path} {method}")
         i = 0
         host_matched = False
         path_matched = False
         for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
             if _text_matches_pattern(host_pattern, host):
                 host_matched = True
-                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or \
-                        (match_querystring and _text_matches_pattern(path_pattern, path_qs)):
+                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
+                    match_querystring and _text_matches_pattern(path_pattern, path_qs)
+                ):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
@@ -115,16 +115,13 @@ class ResponsesMockServer(BaseTestServer):
         new_is_ssl = ClientRequest.is_ssl
         ClientRequest.is_ssl = self._old_is_ssl
         try:
-            original_request = request.clone(scheme='https' if request.headers['AResponsesIsSSL'] else 'http')
+            original_request = request.clone(scheme="https" if request.headers["AResponsesIsSSL"] else "http")
 
-            headers = {k: v for k, v in request.headers.items() if k != 'AResponsesIsSSL'}
+            headers = {k: v for k, v in request.headers.items() if k != "AResponsesIsSSL"}
 
             async with ClientSession(connector=connector) as session:
-                async with getattr(session, request.method.lower())(
-                        original_request.url, headers=headers,
-                        data=(await request.read())
-                ) as r:
-                    headers = {k: v for k, v in r.headers.items() if k.lower() == 'content-type'}
+                async with getattr(session, request.method.lower())(original_request.url, headers=headers, data=(await request.read())) as r:
+                    headers = {k: v for k, v in r.headers.items() if k.lower() == "content-type"}
                     text = await r.text()
                     response = self.Response(text=text, status=r.status, headers=headers)
                     return response
@@ -137,10 +134,7 @@ class ResponsesMockServer(BaseTestServer):
         self._old_resolver_mock = TCPConnector._resolve_host
 
         async def _resolver_mock(_self, host, port, traces=None):
-            return [{
-                'hostname': host, 'host': '127.0.0.1', 'port': self.port,
-                'family': _self._family, 'proto': 0, 'flags': 0
-            }]
+            return [{"hostname": host, "host": "127.0.0.1", "port": self.port, "family": _self._family, "proto": 0, "flags": 0}]
 
         TCPConnector._resolve_host = _resolver_mock
 
@@ -157,8 +151,8 @@ class ResponsesMockServer(BaseTestServer):
         def new_init(_self, *largs, **kwargs):
             self._old_init(_self, *largs, **kwargs)
 
-            is_ssl = '1' if self._old_is_ssl(_self) else ''
-            _self.update_headers({**_self.headers, 'AResponsesIsSSL': is_ssl})
+            is_ssl = "1" if self._old_is_ssl(_self) else ""
+            _self.update_headers({**_self.headers, "AResponsesIsSSL": is_ssl})
 
         ClientRequest.__init__ = new_init
 

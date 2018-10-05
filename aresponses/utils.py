@@ -1,6 +1,6 @@
 import re
 
-ANY = re.compile('.*')
+ANY = re.compile(".*")
 
 
 def _text_matches_pattern(pattern, text):
