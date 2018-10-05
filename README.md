@@ -89,18 +89,17 @@ async def test_foo(event_loop):
 ## Contributing
 
 ### Dev environment setup
-  - **install pyenv**  - Makes it easy to install specific verisons of python and switch between them.
-  - **install python 3.6.2** using pyenv - `pyenv install 3.6.2`
-  - **install direnv** - Manages virtual environments and automatically enables them when switching directories
-  - **clone (forked) github repo** -
-  - **cd to project folder** - after typing `direnv allow`, direnv will create a virtualenvironment and switch you to it
-  - **`pip install -r requirements.txt`** - install all the requirements
+  - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific verisons of python and switch between them. Make sure you install the virtualenv bash hook
+  - `git clone git@github.com:CircleUp/aresponses.git`
+  - `cd aresponses`
+  - `make init` - creates the virtualenvironment and installs all the requirements
   
 ### Submitting a feature request  
   - **`git checkout -b my-feature-branch`** 
   - **make some cool changes**
-  - **`pytest`** - do the tests pass?
-  - **`pylava`** - is the code linter happy?
+  - **`make autoformat`** - do the tests pass?
+  - **`make test`** - do the tests pass?
+  - **`make lint`** - is the code linter happy?
   - **create pull request**
 
 ### Updating package on pypi
