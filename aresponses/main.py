@@ -97,8 +97,10 @@ class ResponsesMockServer(BaseTestServer):
                             if asyncio.iscoroutinefunction(response):
                                 return await response(request)
                             return response(request)
-                        elif isinstance(response, str):
+
+                        if isinstance(response, str):
                             return self.Response(body=response)
+
                         return response
             i += 1
         self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
