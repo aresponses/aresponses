@@ -23,9 +23,10 @@ lint:
 	pylava
 
 deploy:
+	pip install twine wheel
 	git tag $$(python setup.py -V)
 	git push --tags
 	python setup.py bdist_wheel
 	python setup.py sdist
 	echo 'pypi.org Username: '
-	read username && twine upload dist/* -u $$username;
+	@read username && twine upload dist/* -u $$username;
