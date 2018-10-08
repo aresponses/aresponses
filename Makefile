@@ -22,3 +22,10 @@ test:
 lint:
 	pylava
 
+deploy:
+	git tag $$(python setup.py -V)
+	git push --tags
+	python setup.py bdist_wheel
+	python setup.py sdist
+	echo 'pypi.org Username: '
+	read username && twine upload dist/* -u $$username;
