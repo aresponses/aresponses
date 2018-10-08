@@ -17,7 +17,7 @@ autoformat:
 	black .
 
 test:
-	pytest
+	pytest -n auto
 
 lint:
 	pylava
