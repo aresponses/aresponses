@@ -9,3 +9,5 @@ build/
 .tox
 **/__pycache__
 **/.pytest_cache
+.python-version
+.envrc
