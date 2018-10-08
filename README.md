@@ -111,6 +111,9 @@ async def test_foo(event_loop):
 
 ## Changelog
 
+#### 1.1.1
+- regex fix for Python 3.7.0
+
 #### 1.1.0
 - Added passthrough option to permit live network calls
 - Added example of using a callable as a response
