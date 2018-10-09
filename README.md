@@ -92,24 +92,23 @@ async def test_foo(event_loop):
   - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific verisons of python and switch between them. Make sure you install the virtualenv bash hook
   - `git clone git@github.com:CircleUp/aresponses.git`
   - `cd aresponses`
-  - `make init` - creates the virtualenvironment and installs all the requirements
+  - `make init` - creates the virtual environment and installs all the requirements
   
 ### Submitting a feature request  
   - **`git checkout -b my-feature-branch`** 
   - **make some cool changes**
-  - **`make autoformat`** - do the tests pass?
-  - **`make test`** - do the tests pass?
-  - **`make lint`** - is the code linter happy?
+  - **`make autoformat`**
+  - **`make test`**
+  - **`make lint`**
   - **create pull request**
 
 ### Updating package on pypi
-    git tag 0.1
-    git push --tags
-    python setup.py bdist_wheel
-    python setup.py sdist
-    twine upload dist/* -u username
+  - `make deploy`
 
 ## Changelog
+
+#### 1.1.1
+- regex fix for Python 3.7.0
 
 #### 1.1.0
 - Added passthrough option to permit live network calls
