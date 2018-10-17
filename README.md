@@ -1,6 +1,13 @@
-[![build status](https://travis-ci.org/CircleUp/aresponses.svg)](https://travis-ci.org/CircleUp/aresponses)
+
 
 # aresponses
+
+[![image](https://img.shields.io/pypi/v/aresponses.svg)](https://pypi.org/project/aresponses/)
+[![image](https://img.shields.io/pypi/pyversions/aresponses.svg)](https://pypi.org/project/aresponses/)
+[![build status](https://travis-ci.org/CircleUp/aresponses.svg)](https://travis-ci.org/CircleUp/aresponses)
+[![codecov.io](https://codecov.io/github/CircleUp/aresponses/coverage.svg?branch=master)](https://codecov.io/github/CircleUp/aresponses)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 
 an asyncio testing server for mocking external services
 
@@ -89,7 +96,7 @@ async def test_foo(event_loop):
 ## Contributing
 
 ### Dev environment setup
-  - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific verisons of python and switch between them. Make sure you install the virtualenv bash hook
+  - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific versions of python and switch between them. Make sure you install the virtualenv bash hook
   - `git clone git@github.com:CircleUp/aresponses.git`
   - `cd aresponses`
   - `make init` - creates the virtual environment and installs all the requirements
