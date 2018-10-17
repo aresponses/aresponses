@@ -1,26 +1,32 @@
+python_version = 3.6.6
+venv_prefix = aresponses
+venv_name = $(venv_prefix)-$(python_version)
+
 init:
 	@if ! [ -x "$$(command -v pyenv)" ]; then\
-	  echo 'Error: pyenv is not installed.';\
-	  exit 1;\
+	  @echo 'ERROR: pyenv is not installed.';\
+	  @exit 1;\
 	fi
-	pyenv install 3.6.6 -s
-	export VENV_NAME="aresponses-3.6.6"; \
-	if ! [ -d "$$(pyenv root)/versions/$${VENV_NAME}" ]; then\
-		pyenv virtualenv 3.6.6 $${VENV_NAME};\
-	fi; \
-	pyenv local $${VENV_NAME}
+	pyenv install $(python_version) -s
+	@if ! [ -d "$$(pyenv root)/versions/$(venv_name)" ]; then\
+		pyenv virtualenv $(python_version) $(venv_name);\
+	fi;
+	pyenv local $(venv_name)
 	pip install --upgrade pip
 	pip install -r requirements.txt --upgrade
-#	pre-commit install
+	@echo "\nPython binary path: \n"
+	@pyenv which python
+	@echo "\n(Copy this path to tell PyCharm where the virtualenv is. You may have to click the refresh button in the pycharm file explorer.)\n"
+
 
 autoformat:
-	black .
+	@black .
 
 test:
-	pytest -n auto
+	@pytest -n auto
 
 lint:
-	pylava
+	@pylava
 
 deploy:
 	pip install twine wheel
@@ -28,5 +34,5 @@ deploy:
 	git push --tags
 	python setup.py bdist_wheel
 	python setup.py sdist
-	echo 'pypi.org Username: '
+	@echo 'pypi.org Username: '
 	@read username && twine upload dist/* -u $$username;

@@ -13,6 +13,7 @@ setup(
     download_url="https://github.com/circleup/aresponses/tarball/" + __version__,
     keywords=["asyncio", "testing", "responses"],
     classifiers=["Programming Language :: Python :: 3.6"],
+    python_requires=">=3.6",
     install_requires=["aiohttp==3.*,>=3.1.0", "pytest-asyncio"],
     # the following makes a plugin available to pytest
     entry_points={"pytest11": ["name_of_plugin = aresponses.main"]},
