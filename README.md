@@ -97,9 +97,8 @@ async def test_foo(event_loop):
 
 ### Dev environment setup
   - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific versions of python and switch between them. Make sure you install the virtualenv bash hook
-  - `git clone git@github.com:CircleUp/aresponses.git`
-  - `cd aresponses`
-  - `make init` - creates the virtual environment and installs all the requirements
+  - `git clone` the repo and `cd` into it.
+  - `make init` - installs proper version of python, creates the virtual environment, activates it and installs all the requirements
   
 ### Submitting a feature request  
   - **`git checkout -b my-feature-branch`** 
