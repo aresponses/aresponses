@@ -52,7 +52,7 @@ require_pyenv:
 	else\
 	  echo -e "\033[0;32m ✔️  pyenv installed\033[0m";\
 	fi
-	@if ! [ -d "$$(pyenv root)/plugins/pyenv-virtualenv" ]; then\
+	@if ! [[ "$$(pyenv virtualenv --version)" == *"pyenv-virtualenv"* ]]; then\
 	  echo -e '\n\033[0;31m ❌ pyenv virtualenv is not installed.  Follow instructions here: $(pyenv_virt_instructions) \n\033[0m';\
 	  exit 1;\
 	else\
