@@ -24,7 +24,7 @@ an asyncio testing server for mocking external services
 
 Host, path, or method may be either strings (exact match) or regular expressions.
 
-When a request is received the first matching response will be returned (based on the order it was received in.
+When a request is received the first matching response will be returned (based on the order it was received in).
 
 Requires Python 3.6 or greater.
 
@@ -92,6 +92,29 @@ async def test_foo(event_loop):
         
 ```
 
+### aresponses with [pytest-aiohttp](https://github.com/aio-libs/pytest-aiohttp)
+
+If you need to use aresponses together with pytest-aiohttp, you should re-initialize main aresponses fixture with `loop` fixture
+```python
+from aresponses import ResponsesMockServer
+
+@pytest.fixture
+async def aresponses(loop):
+    async with ResponsesMockServer(loop=loop) as server:
+        yield server
+```
+
+To bypass requests from your aiohttp client fixture to your internal server and redirect only external requests aresponses should be updated even more
+```python
+from aresponses import ResponsesMockServer
+
+@pytest.fixture
+async def aresponses(loop, test_client):
+    async with ResponsesMockServer(loop=loop, host='127.0.0.1') as server:
+        # all requests made by test_client to internal API will not be blocked
+        server.add('{}:{}'.format(test_client.server.host, test_client.server.port), response=server.passthrough)
+        yield server
+```
 
 ## Contributing
 
