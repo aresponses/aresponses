@@ -104,18 +104,6 @@ async def aresponses(loop):
         yield server
 ```
 
-To bypass requests from your aiohttp client fixture to your internal server and redirect only external requests aresponses should be updated even more
-```python
-from aresponses import ResponsesMockServer
-
-@pytest.fixture
-async def aresponses(loop, test_client):
-    async with ResponsesMockServer(loop=loop, host='127.0.0.1') as server:
-        # all requests made by test_client to internal API will not be blocked
-        server.add('{}:{}'.format(test_client.server.host, test_client.server.port), response=server.passthrough)
-        yield server
-```
-
 ## Contributing
 
 ### Dev environment setup
