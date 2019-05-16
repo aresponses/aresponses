@@ -49,6 +49,9 @@ async def test_foo(aresponses):
         return aresponses.Response(status=200, text=str(request.url))
 
     aresponses.add('foo.com', '/', 'get', my_handler)
+    
+    # JSON response
+    aresponses.add('foo.com', '/', 'get', aresponses.Response(body=b'{"status":"ok"}'))
 
     url = 'http://foo.com'
     async with aiohttp.ClientSession() as session:
@@ -68,6 +71,10 @@ async def test_foo(aresponses):
         async with session.get(url) as response:
             text = await response.text()
             assert text == 'http://foo.com/'
+        
+        async with session.get(url) as response:
+            data = await response.json()
+            assert data == {"state": "ok"}
 ```
 
 ```python
