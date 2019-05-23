@@ -54,6 +54,42 @@ async def test_fixture(aresponses):
 
 
 @pytest.mark.asyncio
+async def test_fixture_body_json(aresponses):
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
+                   body={"a": 1})
+
+    url = "http://foo.com"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json={"a": 1}) as response:
+            text = await response.text()
+    assert text == "hi"
+
+
+@pytest.mark.asyncio
+@pytest.mark.xfail(reason='json body not matched')
+async def test_fixture_body_json_failed(aresponses):
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
+                   body={"a": 2})
+
+    url = "http://foo.com"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json={"a": 1}) as _:
+            pass
+
+
+@pytest.mark.asyncio
+async def test_fixture_body_text(aresponses):
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
+                   body='{"a": 1}')
+
+    url = "http://foo.com"
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json={"a": 1}) as response:
+            text = await response.text()
+    assert text == "hi"
+
+
+@pytest.mark.asyncio
 async def test_https(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
 

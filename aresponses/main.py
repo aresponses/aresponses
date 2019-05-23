@@ -17,6 +17,10 @@ from aresponses.utils import _text_matches_pattern, ANY
 logger = logging.getLogger(__name__)
 
 
+class NoBody(object):
+    pass
+
+
 class RawResponse(StreamResponse):
     """
     Allow complete control over the response
@@ -59,7 +63,7 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         return await self._find_response(request)
 
-    def add(self, host, path=ANY, method=ANY, response="", match_querystring=False):
+    def add(self, host, path=ANY, method=ANY, response="", match_querystring=False, body=NoBody()):
         if isinstance(host, str):
             host = host.lower()
 
@@ -67,7 +71,7 @@ class ResponsesMockServer(BaseTestServer):
             method = method.lower()
 
         self._host_patterns.add(host)
-        self._responses.append((host, path, method, response, match_querystring))
+        self._responses.append((host, path, method, response, match_querystring, body))
 
     def _host_matches(self, match_host):
         match_host = match_host.lower()
@@ -83,7 +87,7 @@ class ResponsesMockServer(BaseTestServer):
         i = 0
         host_matched = False
         path_matched = False
-        for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
+        for host_pattern, path_pattern, method_pattern, response, match_querystring, body in self._responses:
             if _text_matches_pattern(host_pattern, host):
                 host_matched = True
                 if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
@@ -91,20 +95,22 @@ class ResponsesMockServer(BaseTestServer):
                 ):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
-                        del self._responses[i]
+                        if (isinstance(body, NoBody) or
+                            (isinstance(body, dict) and body == (await request.json())) or
+                            (isinstance(body, str) and body == (await request.text()))):
+                            del self._responses[i]
 
-                        if callable(response):
-                            if asyncio.iscoroutinefunction(response):
-                                return await response(request)
-                            return response(request)
+                            if callable(response):
+                                if asyncio.iscoroutinefunction(response):
+                                    return await response(request)
+                                return response(request)
 
-                        if isinstance(response, str):
-                            return self.Response(body=response)
+                            if isinstance(response, str):
+                                return self.Response(body=response)
 
-                        return response
+                            return response
             i += 1
         self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
-        self._loop.stop()
         raise self._exception  # noqa
 
     async def passthrough(self, request):
