@@ -66,7 +66,7 @@ async def test_fixture_body_json(aresponses):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason='json body not matched')
+@pytest.mark.xfail(reason='json body not matched, remove to see fail message')
 async def test_fixture_body_json_failed(aresponses):
     aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
                    body={"a": 2})

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from functools import partial
+from json import JSONDecodeError
 
 import pytest
 from aiohttp import web, ClientSession
@@ -17,7 +18,7 @@ from aresponses.utils import _text_matches_pattern, ANY
 logger = logging.getLogger(__name__)
 
 
-class NoBody(object):
+class NoBody:
     pass
 
 
@@ -84,21 +85,15 @@ class ResponsesMockServer(BaseTestServer):
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")
-        i = 0
-        host_matched = False
-        path_matched = False
-        for host_pattern, path_pattern, method_pattern, response, match_querystring, body in self._responses:
+        for i, (host_pattern, path_pattern, method_pattern, response, match_querystring, body) in enumerate(self._responses):
             if _text_matches_pattern(host_pattern, host):
-                host_matched = True
-                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
-                    match_querystring and _text_matches_pattern(path_pattern, path_qs)
-                ):
-                    path_matched = True
+                if ((not match_querystring and _text_matches_pattern(path_pattern, path)) or
+                        (match_querystring and _text_matches_pattern(path_pattern, path_qs))):
                     if _text_matches_pattern(method_pattern, method.lower()):
                         if (isinstance(body, NoBody) or
-                            (isinstance(body, dict) and body == (await request.json())) or
-                            (isinstance(body, str) and body == (await request.text()))):
-                            del self._responses[i]
+                                (isinstance(body, dict) and body == (await request.json())) or
+                                (isinstance(body, str) and body == (await request.text()))):
+                            self._responses.pop(i)
 
                             if callable(response):
                                 if asyncio.iscoroutinefunction(response):
@@ -109,9 +104,19 @@ class ResponsesMockServer(BaseTestServer):
                                 return self.Response(body=response)
 
                             return response
-            i += 1
-        self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
-        raise self._exception  # noqa
+        if request.body_exists:
+            try:
+                request_body = await request.json()
+            except JSONDecodeError:
+                request_body = await request.read()
+        else:
+            request_body = None
+        pytest.fail(
+            f"No Match found for \n"
+            f"host: {host} \n"
+            f"path: {path} \n"
+            f"method: {method} \n"
+            f"body: {request_body}\n")
 
     async def passthrough(self, request):
         """Make non-mocked network request"""

@@ -17,13 +17,18 @@ an asyncio testing server for mocking external services
  - use regular expression matching for domain, path, or method 
  - works with https requests as well (by switching them to http requests)
  - works with callables
+ - allows matching request body as json(using `dict`), string(using `str`)
  
 ## Usage
 
-*aresponses.add(host_pattern, path_pattern, method_pattern, response)*
+*aresponses.add(host_pattern, path_pattern, method_pattern, response, body: \[str, dict\])*
 
 Host, path, or method may be either strings (exact match) or regular expressions.
 
+if body:
+  * str: the request body will be matched as decoded utf8 string
+  * dict: the request body will be matched as loaded json dict
+  
 When a request is received the first matching response will be returned (based on the order it was received in).
 
 Requires Python 3.6 or greater.
@@ -32,6 +37,7 @@ Requires Python 3.6 or greater.
 ```python
 import pytest
 import aiohttp
+from aiohttp.web_response import json_response
 
 @pytest.mark.asyncio
 async def test_foo(aresponses):
@@ -52,6 +58,12 @@ async def test_foo(aresponses):
     
     # JSON response
     aresponses.add('foo.com', '/', 'get', aresponses.Response(body=b'{"status":"ok"}'))
+    
+    # JSON response helper
+    aresponses.add('foo.com', '/', 'get', json_response(data={'status': 'ok'}))
+
+    # text as response (defaults to status 200 response), match request body as json input
+    aresponses.add('foo.com', '/', 'post', 'hi there!!', body={'a': 1})
 
     url = 'http://foo.com'
     async with aiohttp.ClientSession() as session:
@@ -128,6 +140,11 @@ async def aresponses(loop):
 
 ### Updating package on pypi
   - `make deploy`
+  
+### if not using makefile
+* installation: `pip -r requirements.txt`
+* testing: `pytest tests`
+* linting: `pylava`
 
 ## Changelog
 
