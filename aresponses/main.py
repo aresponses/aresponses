@@ -87,12 +87,15 @@ class ResponsesMockServer(BaseTestServer):
         logger.info(f"Looking for match for {host} {path} {method}")
         for i, (host_pattern, path_pattern, method_pattern, response, match_querystring, body) in enumerate(self._responses):
             if _text_matches_pattern(host_pattern, host):
-                if ((not match_querystring and _text_matches_pattern(path_pattern, path)) or
-                        (match_querystring and _text_matches_pattern(path_pattern, path_qs))):
+                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
+                    match_querystring and _text_matches_pattern(path_pattern, path_qs)
+                ):
                     if _text_matches_pattern(method_pattern, method.lower()):
-                        if (isinstance(body, NoBody) or
-                                (isinstance(body, dict) and body == (await request.json())) or
-                                (isinstance(body, str) and body == (await request.text()))):
+                        if (
+                            isinstance(body, NoBody)
+                            or (isinstance(body, dict) and body == (await request.json()))
+                            or (isinstance(body, str) and body == (await request.text()))
+                        ):
                             self._responses.pop(i)
 
                             if callable(response):
@@ -111,12 +114,7 @@ class ResponsesMockServer(BaseTestServer):
                 request_body = await request.read()
         else:
             request_body = None
-        pytest.fail(
-            f"No Match found for \n"
-            f"host: {host} \n"
-            f"path: {path} \n"
-            f"method: {method} \n"
-            f"body: {request_body}\n")
+        pytest.fail(f"No Match found for \nhost: {host} \npath: {path} \nmethod: {method} \nbody: {request_body}\n")
 
     async def passthrough(self, request):
         """Make non-mocked network request"""

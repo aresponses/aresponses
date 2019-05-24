@@ -14,11 +14,11 @@ an asyncio testing server for mocking external services
 ## Features
  - Fast mocks using actual network connections
  - allows mocking some types of network issues
- - use regular expression matching for domain, path, or method 
+ - use regular expression matching for domain, path, or method
  - works with https requests as well (by switching them to http requests)
  - works with callables
  - allows matching request body as json(using `dict`), string(using `str`)
- 
+
 ## Usage
 
 *aresponses.add(host_pattern, path_pattern, method_pattern, response, body: \[str, dict\])*
@@ -28,7 +28,7 @@ Host, path, or method may be either strings (exact match) or regular expressions
 if body:
   * str: the request body will be matched as decoded utf8 string
   * dict: the request body will be matched as loaded json dict
-  
+
 When a request is received the first matching response will be returned (based on the order it was received in).
 
 Requires Python 3.6 or greater.
@@ -55,10 +55,10 @@ async def test_foo(aresponses):
         return aresponses.Response(status=200, text=str(request.url))
 
     aresponses.add('foo.com', '/', 'get', my_handler)
-    
+
     # JSON response
     aresponses.add('foo.com', '/', 'get', aresponses.Response(body=b'{"status":"ok"}'))
-    
+
     # JSON response helper
     aresponses.add('foo.com', '/', 'get', json_response(data={'status': 'ok'}))
 
@@ -83,7 +83,7 @@ async def test_foo(aresponses):
         async with session.get(url) as response:
             text = await response.text()
             assert text == 'http://foo.com/'
-        
+
         async with session.get(url) as response:
             data = await response.json()
             assert data == {"state": "ok"}
@@ -99,16 +99,16 @@ async def test_foo(event_loop):
     async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
         arsps.add('foo.com', '/', 'get', 'hi there!!')
         arsps.add(arsps.ANY, '/', 'get', arsps.Response(text='hey!'))
-        
+
         async with aiohttp.ClientSession(loop=event_loop) as session:
             async with session.get('http://foo.com') as response:
                 text = await response.text()
                 assert text == 'hi'
-            
+
             async with session.get('https://google.com') as response:
                 text = await response.text()
                 assert text == 'hey!'
-        
+
 ```
 
 ### aresponses with [pytest-aiohttp](https://github.com/aio-libs/pytest-aiohttp)
@@ -129,9 +129,9 @@ async def aresponses(loop):
   - **install pyenv and pyenv-virtualenv**  - Makes it easy to install specific versions of python and switch between them. Make sure you install the virtualenv bash hook
   - `git clone` the repo and `cd` into it.
   - `make init` - installs proper version of python, creates the virtual environment, activates it and installs all the requirements
-  
-### Submitting a feature request  
-  - **`git checkout -b my-feature-branch`** 
+
+### Submitting a feature request
+  - **`git checkout -b my-feature-branch`**
   - **make some cool changes**
   - **`make autoformat`**
   - **`make test`**
@@ -140,11 +140,6 @@ async def aresponses(loop):
 
 ### Updating package on pypi
   - `make deploy`
-  
-### if not using makefile
-* installation: `pip -r requirements.txt`
-* testing: `pytest tests`
-* linting: `pylava`
 
 ## Changelog
 

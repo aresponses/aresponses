@@ -55,8 +55,7 @@ async def test_fixture(aresponses):
 
 @pytest.mark.asyncio
 async def test_fixture_body_json(aresponses):
-    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
-                   body={"a": 1})
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"), body={"a": 1})
 
     url = "http://foo.com"
     async with aiohttp.ClientSession() as session:
@@ -66,10 +65,9 @@ async def test_fixture_body_json(aresponses):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail(reason='json body not matched, remove to see fail message')
+@pytest.mark.xfail(reason="json body not matched, remove to see fail message")
 async def test_fixture_body_json_failed(aresponses):
-    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
-                   body={"a": 2})
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"), body={"a": 2})
 
     url = "http://foo.com"
     async with aiohttp.ClientSession() as session:
@@ -79,8 +77,7 @@ async def test_fixture_body_json_failed(aresponses):
 
 @pytest.mark.asyncio
 async def test_fixture_body_text(aresponses):
-    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"),
-                   body='{"a": 1}')
+    aresponses.add("foo.com", "/", "post", aresponses.Response(text="hi"), body='{"a": 1}')
 
     url = "http://foo.com"
     async with aiohttp.ClientSession() as session:
