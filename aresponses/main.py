@@ -122,8 +122,8 @@ class ResponsesMockServer(BaseTestServer):
             async with ClientSession(connector=connector) as session:
                 async with getattr(session, request.method.lower())(original_request.url, headers=headers, data=(await request.read())) as r:
                     headers = {k: v for k, v in r.headers.items() if k.lower() == "content-type"}
-                    text = await r.text()
-                    response = self.Response(text=text, status=r.status, headers=headers)
+                    data = await r.read()
+                    response = self.Response(body=data, status=r.status, headers=headers)
                     return response
         finally:
             ClientRequest.is_ssl = new_is_ssl
