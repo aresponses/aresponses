@@ -131,6 +131,9 @@ async def aresponses(loop):
 
 ## Changelog
 
+#### 1.1.2
+- make passthrough feature work with binary data
+
 #### 1.1.1
 - regex fix for Python 3.7.0
 
