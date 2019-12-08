@@ -28,7 +28,7 @@ autoformat:  ## Run the autoformatter.
 	@black .
 
 test:  ## Run the tests.
-	@pytest -n auto
+	@pytest
 	@echo -e "The tests pass! ✨ 🍰 ✨"
 
 lint:  ## Run the code linter.

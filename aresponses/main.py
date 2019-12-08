@@ -79,7 +79,7 @@ class ResponsesMockServer(BaseTestServer):
 
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
-        logger.info(f"Looking for match for {host} {path} {method}")
+        logger.info(f"Looking for match for {host} {path} {method}")  # noqa
         i = 0
         host_matched = False
         path_matched = False
