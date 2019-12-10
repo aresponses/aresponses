@@ -51,7 +51,13 @@ async def test_foo(aresponses):
     aresponses.add('foo.com', '/', 'get', my_handler)
     
     # JSON response
-    aresponses.add('foo.com', '/', 'get', aresponses.Response(body=b'{"status":"ok"}'))
+    aresponses.add(
+        'foo.com', '/', 'get', 
+        aresponses.Response(
+            body=b'{"status":"ok"}', 
+            headers={"Content-Type": "application/json"}
+        )
+    )
 
     url = 'http://foo.com'
     async with aiohttp.ClientSession() as session:
