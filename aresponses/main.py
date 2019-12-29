@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from copy import copy
 from functools import partial
 
 import pytest
@@ -80,7 +81,6 @@ class ResponsesMockServer(BaseTestServer):
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
-        i = 0
         host_matched = False
         path_matched = False
         for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
@@ -91,7 +91,7 @@ class ResponsesMockServer(BaseTestServer):
                 ):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
-                        del self._responses[i]
+                        response = copy(response)
 
                         if callable(response):
                             if asyncio.iscoroutinefunction(response):
@@ -102,7 +102,6 @@ class ResponsesMockServer(BaseTestServer):
                             return self.Response(body=response)
 
                         return response
-            i += 1
         self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
         self._loop.stop()
         raise self._exception  # noqa
