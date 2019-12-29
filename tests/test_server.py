@@ -186,3 +186,15 @@ async def test_passthrough(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == "200 OK"
+
+
+@pytest.mark.asyncio
+async def test_reusable(aresponses):
+    aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, "hi", is_reusable=True)
+
+    url = "http://foo.com"
+    for _ in range(2):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                text = await response.text()
+        assert text == "hi"

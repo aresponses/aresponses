@@ -60,7 +60,7 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         return await self._find_response(request)
 
-    def add(self, host, path=ANY, method=ANY, response="", match_querystring=False):
+    def add(self, host, path=ANY, method=ANY, response="", match_querystring=False, is_reusable=False):
         if isinstance(host, str):
             host = host.lower()
 
@@ -68,7 +68,7 @@ class ResponsesMockServer(BaseTestServer):
             method = method.lower()
 
         self._host_patterns.add(host)
-        self._responses.append((host, path, method, response, match_querystring))
+        self._responses.append((host, path, method, response, match_querystring, is_reusable))
 
     def _host_matches(self, match_host):
         match_host = match_host.lower()
@@ -83,7 +83,8 @@ class ResponsesMockServer(BaseTestServer):
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
         host_matched = False
         path_matched = False
-        for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
+        for i, (host_pattern, path_pattern, method_pattern, response, match_querystring, is_reusable) \
+                in enumerate(self._responses):
             if _text_matches_pattern(host_pattern, host):
                 host_matched = True
                 if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
@@ -91,7 +92,10 @@ class ResponsesMockServer(BaseTestServer):
                 ):
                     path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
-                        response = copy(response)
+                        if is_reusable:
+                            response = copy(response)
+                        else:
+                            del self._responses[i]
 
                         if callable(response):
                             if asyncio.iscoroutinefunction(response):
