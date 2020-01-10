@@ -12,3 +12,4 @@ build/
 .python-version
 .envrc
 .coverage
+pip-wheel-metadata/
