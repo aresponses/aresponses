@@ -121,7 +121,7 @@ async def test_callable(aresponses):
 @pytest.mark.asyncio
 async def test_raw_response(aresponses):
     raw_response = b"""HTTP/1.1 200 OK\r
-Date: Tue, 26 Dec 2017 05:47:50 GMT
+Date: Tue, 26 Dec 2017 05:47:50 GMT\r
 \r
 <html><body><h1>It works!</h1></body></html>
 """
