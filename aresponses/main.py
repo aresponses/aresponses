@@ -17,7 +17,19 @@ from aresponses.utils import _text_matches_pattern, ANY
 logger = logging.getLogger(__name__)
 
 
-class NoMatchFound(Exception):
+class AresponsesAssertionError(AssertionError):
+    pass
+
+
+class UnmatchedRequest(AresponsesAssertionError):
+    pass
+
+
+class UnusedResponses(AresponsesAssertionError):
+    pass
+
+
+class IncorrectRequestOrder(AresponsesAssertionError):
     pass
 
 
@@ -51,6 +63,9 @@ class ResponsesMockServer(BaseTestServer):
         self._responses = []
         self._host_patterns = set()
         self._exception = None
+        self._unmatched_requests = []
+        self._first_unordered_request = None
+        self._request_count = 0
         super().__init__(scheme=scheme, host=host, **kwargs)
 
     async def _make_runner(self, debug=True, **kwargs):
@@ -61,6 +76,7 @@ class ResponsesMockServer(BaseTestServer):
         return
 
     async def _handler(self, request):
+        self._request_count += 1
         return await self._find_response(request)
 
     def add(self, host, path=ANY, method=ANY, response="", match_querystring=False):
@@ -85,15 +101,13 @@ class ResponsesMockServer(BaseTestServer):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
         i = 0
-        host_matched = False
-        path_matched = False
         for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
+            if i > 0 and self._first_unordered_request is None:
+                self._first_unordered_request = self._request_count
             if _text_matches_pattern(host_pattern, host):
-                host_matched = True
                 if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
                     match_querystring and _text_matches_pattern(path_pattern, path_qs)
                 ):
-                    path_matched = True
                     if _text_matches_pattern(method_pattern, method.lower()):
                         del self._responses[i]
 
@@ -107,9 +121,8 @@ class ResponsesMockServer(BaseTestServer):
 
                         return response
             i += 1
-        self._exception = NoMatchFound(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
-        self._loop.stop()
-        raise self._exception  # noqa
+
+        self._unmatched_requests.append(request)
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
@@ -167,9 +180,25 @@ class ResponsesMockServer(BaseTestServer):
         ClientRequest.is_ssl = self._old_is_ssl
 
         await self.close()
-        if self._exception:
-            pytest.fail(str(self._exception))
-            raise self._exception  # noqa
+
+    def assert_no_unused_responses(self):
+        if self._responses:
+            host, path, method, response, match_querystring = self._responses[0]
+            raise UnusedResponses(f"Unused Response. host={host} path={path} method={method} match_querystring={match_querystring}")
+
+    def assert_called_in_order(self):
+        if self._first_unordered_request is not None:
+            raise IncorrectRequestOrder(f"Request {self._first_unordered_request} was out of order")
+
+    def assert_all_requests_matched(self):
+        if self._unmatched_requests:
+            request = self._unmatched_requests[0]
+            raise UnmatchedRequest(f"No match found for request: {request.method} {request.host} {request.path}")
+
+    def assert_plan_strictly_followed(self):
+        self.assert_no_unused_responses()
+        self.assert_called_in_order()
+        self.assert_all_requests_matched()
 
 
 @pytest.fixture

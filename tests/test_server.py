@@ -1,10 +1,13 @@
 import aiohttp
 import pytest
+from aiohttp import ServerDisconnectedError
 
-import aresponses
-
+import aresponses as aresponses_mod
 
 # example test in readme.md
+from aresponses.main import UnusedResponses, UnmatchedRequest, IncorrectRequestOrder
+
+
 @pytest.mark.asyncio
 async def test_foo(aresponses):
     # text as response (defaults to status 200 response)
@@ -41,6 +44,8 @@ async def test_foo(aresponses):
             text = await response.text()
             assert text == "http://foo.com/"
 
+    aresponses.assert_plan_strictly_followed()
+
 
 @pytest.mark.asyncio
 async def test_fixture(aresponses):
@@ -51,6 +56,8 @@ async def test_fixture(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == "hi"
+
+    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -63,17 +70,21 @@ async def test_https(aresponses):
             text = await response.text()
     assert text == "hi"
 
+    aresponses.assert_plan_strictly_followed()
+
 
 @pytest.mark.asyncio
 async def test_context_manager(event_loop):
-    async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
-        arsps.add("foo.com", "/", "get", aresponses.Response(text="hi"))
+    async with aresponses_mod.ResponsesMockServer(loop=event_loop) as arsps:
+        arsps.add("foo.com", "/", "get", aresponses_mod.Response(text="hi"))
 
         url = "http://foo.com"
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 text = await response.text()
         assert text == "hi"
+
+    arsps.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -83,6 +94,8 @@ async def test_bad_redirect(aresponses):
     async with aiohttp.ClientSession() as session:
         response = await session.get(url)
         await response.text()
+
+    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -98,6 +111,8 @@ async def test_regex(aresponses):
         async with session.get("http://bar.com") as response:
             text = await response.text()
             assert text == "there"
+
+    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -117,6 +132,8 @@ async def test_callable(aresponses):
             text = await response.text()
             assert text == "bar.com"
 
+    aresponses.assert_plan_strictly_followed()
+
 
 @pytest.mark.asyncio
 async def test_raw_response(aresponses):
@@ -131,6 +148,8 @@ Date: Tue, 26 Dec 2017 05:47:50 GMT\r
         async with session.get("http://foo.com") as response:
             text = await response.text()
             assert "It works!" in text
+
+    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -151,12 +170,20 @@ async def test_querystring(aresponses):
             text = await response.text()
     assert text == "hi"
 
+    aresponses.assert_plan_strictly_followed()
+
 
 @pytest.mark.asyncio
 async def test_querystring_not_match(aresponses):
     aresponses.add("foo.com", "/path", "get", aresponses.Response(text="hi"), match_querystring=True)
     aresponses.add("foo.com", aresponses.ANY, "get", aresponses.Response(text="miss"), match_querystring=True)
     aresponses.add("foo.com", aresponses.ANY, "get", aresponses.Response(text="miss"), match_querystring=True)
+
+    url = "http://foo.com/path"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            text = await response.text()
+    assert text == "hi"
 
     url = "http://foo.com/path?reply=42"
     async with aiohttp.ClientSession() as session:
@@ -170,11 +197,7 @@ async def test_querystring_not_match(aresponses):
             text = await response.text()
     assert text == "miss"
 
-    url = "http://foo.com/path"
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            text = await response.text()
-    assert text == "hi"
+    aresponses.assert_plan_strictly_followed()
 
 
 @pytest.mark.asyncio
@@ -186,3 +209,50 @@ async def test_passthrough(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == "200 OK"
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_failure_not_called(aresponses):
+    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
+    with pytest.raises(UnusedResponses):
+        aresponses.assert_no_unused_responses()
+
+    with pytest.raises(UnusedResponses):
+        aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_failure_no_match(aresponses):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get("http://foo.com") as response:
+                await response.text()
+        except ServerDisconnectedError:
+            pass
+    with pytest.raises(UnmatchedRequest):
+        aresponses.assert_all_requests_matched()
+
+    with pytest.raises(UnmatchedRequest):
+        aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_failure_bad_ordering(aresponses):
+    aresponses.add("foo.com", "/a", "get", aresponses.Response(text="hi"))
+    aresponses.add("foo.com", "/b", "get", aresponses.Response(text="hi"))
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://foo.com/b") as response:
+            await response.text()
+        async with session.get("http://foo.com/a") as response:
+            await response.text()
+
+    aresponses.assert_all_requests_matched()
+    aresponses.assert_no_unused_responses()
+    with pytest.raises(IncorrectRequestOrder):
+        aresponses.assert_called_in_order()
+
+    with pytest.raises(IncorrectRequestOrder):
+        aresponses.assert_plan_strictly_followed()
