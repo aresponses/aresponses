@@ -132,7 +132,7 @@ class ResponsesMockServer(BaseTestServer):
         finally:
             ClientRequest.is_ssl = new_is_ssl
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "ResponsesMockServer":
         await self.start_server(loop=self._loop)
 
         self._old_resolver_mock = TCPConnector._resolve_host
@@ -173,6 +173,6 @@ class ResponsesMockServer(BaseTestServer):
 
 
 @pytest.fixture
-async def aresponses(event_loop):
+async def aresponses(event_loop) -> ResponsesMockServer:
     async with ResponsesMockServer(loop=event_loop) as server:
         yield server
