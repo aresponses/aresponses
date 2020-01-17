@@ -17,6 +17,10 @@ from aresponses.utils import _text_matches_pattern, ANY
 logger = logging.getLogger(__name__)
 
 
+class NoMatchFound(Exception):
+    pass
+
+
 class RawResponse(StreamResponse):
     """
     Allow complete control over the response
@@ -103,7 +107,7 @@ class ResponsesMockServer(BaseTestServer):
 
                         return response
             i += 1
-        self._exception = Exception(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
+        self._exception = NoMatchFound(f"No Match found for {host} {path} {method}.  Host Match: {host_matched}  Path Match: {path_matched}")
         self._loop.stop()
         raise self._exception  # noqa
 
