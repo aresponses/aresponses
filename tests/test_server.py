@@ -273,3 +273,15 @@ async def test_failure_bad_ordering(aresponses):
 
     with pytest.raises(IncorrectRequestOrder):
         aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_failure_not_called_enough_times(aresponses):
+    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), repeat=2)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://foo.com/") as response:
+            await response.text()
+
+    with pytest.raises(UnusedResponses):
+        aresponses.assert_plan_strictly_followed()

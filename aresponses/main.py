@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from copy import copy
 from functools import partial
 
 import pytest
@@ -80,20 +81,20 @@ class ResponsesMockServer(BaseTestServer):
         self.calls.append(request)
         return await self._find_response(request)
 
-    def add(self, host, path=ANY, method=ANY, response="", *, body_match=ANY, match_querystring=False):
+    def add(self, host, path=ANY, method=ANY, response="", *, body_match=ANY, match_querystring=False, repeat=1):
         if isinstance(host, str):
             host = host.lower()
 
         if isinstance(method, str):
             method = method.lower()
 
-        self._responses.append((host, path, method, body_match, response, match_querystring))
+        self._responses.append((host, path, method, body_match, response, match_querystring, repeat))
 
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
         i = -1
-        for host_pattern, path_pattern, method_pattern, body_pattern, response, match_querystring in self._responses:
+        for host_pattern, path_pattern, method_pattern, body_pattern, response, match_querystring, repeat in self._responses:
             i += 1
             if i > 0 and self._first_unordered_request is None:
                 self._first_unordered_request = self._request_count
@@ -113,7 +114,12 @@ class ResponsesMockServer(BaseTestServer):
                 if not _text_matches_pattern(body_pattern, await request.text()):
                     continue
 
-            del self._responses[i]
+            repeat -= 1
+
+            if repeat <= 0:
+                del self._responses[i]
+            else:
+                self._responses[i] = (host_pattern, path_pattern, method_pattern, body_pattern, copy(response), match_querystring, repeat)
 
             if callable(response):
                 if asyncio.iscoroutinefunction(response):
@@ -186,7 +192,7 @@ class ResponsesMockServer(BaseTestServer):
 
     def assert_no_unused_responses(self):
         if self._responses:
-            host, path, method, body_pattern, response, match_querystring = self._responses[0]
+            host, path, method, body_pattern, response, match_querystring, repeat = self._responses[0]
             raise UnusedResponses(f"Unused Response. host={host} path={path} method={method} body={body_pattern} match_querystring={match_querystring}")
 
     def assert_called_in_order(self):
