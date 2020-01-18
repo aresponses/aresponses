@@ -1,3 +1,4 @@
+import re
 import aiohttp
 import pytest
 from aiohttp import ServerDisconnectedError
@@ -56,6 +57,22 @@ async def test_fixture(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == "hi"
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_body_match(aresponses):
+    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), body_match=re.compile(r".*?apple.*"))
+
+    url = "http://foo.com"
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(url, data={"fruit": "pineapple"}) as response:
+                text = await response.text()
+                assert text == "hi"
+        except ServerDisconnectedError:
+            pass
 
     aresponses.assert_plan_strictly_followed()
 
