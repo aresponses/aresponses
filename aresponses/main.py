@@ -66,6 +66,7 @@ class ResponsesMockServer(BaseTestServer):
         self._unmatched_requests = []
         self._first_unordered_request = None
         self._request_count = 0
+        self.calls = []
         super().__init__(scheme=scheme, host=host, **kwargs)
 
     async def _make_runner(self, debug=True, **kwargs):
@@ -77,6 +78,7 @@ class ResponsesMockServer(BaseTestServer):
 
     async def _handler(self, request):
         self._request_count += 1
+        self.calls.append(request)
         return await self._find_response(request)
 
     def add(self, host, path=ANY, method=ANY, response="", match_querystring=False):
