@@ -102,27 +102,35 @@ class ResponsesMockServer(BaseTestServer):
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
-        i = 0
+        i = -1
         for host_pattern, path_pattern, method_pattern, response, match_querystring in self._responses:
+            i += 1
             if i > 0 and self._first_unordered_request is None:
                 self._first_unordered_request = self._request_count
-            if _text_matches_pattern(host_pattern, host):
-                if (not match_querystring and _text_matches_pattern(path_pattern, path)) or (
-                    match_querystring and _text_matches_pattern(path_pattern, path_qs)
-                ):
-                    if _text_matches_pattern(method_pattern, method.lower()):
-                        del self._responses[i]
 
-                        if callable(response):
-                            if asyncio.iscoroutinefunction(response):
-                                return await response(request)
-                            return response(request)
+            path_to_match = path_qs if match_querystring else path
 
-                        if isinstance(response, str):
-                            return self.Response(body=response)
+            if not _text_matches_pattern(host_pattern, host):
+                continue
 
-                        return response
-            i += 1
+            if not _text_matches_pattern(path_pattern, path_to_match):
+                continue
+
+            if not _text_matches_pattern(method_pattern, method.lower()):
+                continue
+
+            del self._responses[i]
+
+            if callable(response):
+                if asyncio.iscoroutinefunction(response):
+                    return await response(request)
+                return response(request)
+
+            if isinstance(response, str):
+                return self.Response(body=response)
+
+            return response
+
 
         self._unmatched_requests.append(request)
 
