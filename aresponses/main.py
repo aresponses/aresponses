@@ -61,7 +61,6 @@ class ResponsesMockServer(BaseTestServer):
 
     def __init__(self, *, scheme=sentinel, host="127.0.0.1", **kwargs):
         self._responses = []
-        self._host_patterns = set()
         self._exception = None
         self._unmatched_requests = []
         self._first_unordered_request = None
@@ -88,16 +87,7 @@ class ResponsesMockServer(BaseTestServer):
         if isinstance(method, str):
             method = method.lower()
 
-        self._host_patterns.add(host)
         self._responses.append((host, path, method, body_match, response, match_querystring))
-
-    def _host_matches(self, match_host):
-        match_host = match_host.lower()
-        for host_pattern in self._host_patterns:
-            if _text_matches_pattern(host_pattern, match_host):
-                return True
-
-        return False
 
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
