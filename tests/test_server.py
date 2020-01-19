@@ -6,7 +6,7 @@ from aiohttp import ServerDisconnectedError
 import aresponses as aresponses_mod
 
 # example test in readme.md
-from aresponses.main import UnusedResponses, UnmatchedRequest, IncorrectRequestOrder
+from aresponses.errors import NoRouteFoundError, UnusedRouteError, UnorderedRouteCallError
 
 
 @pytest.mark.asyncio
@@ -16,6 +16,9 @@ async def test_foo(aresponses):
 
     # custom status code response
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="error", status=500))
+
+    # JSON response
+    aresponses.add("foo.com", "/", "get", {"status": "ok"})
 
     # passthrough response (makes an actual network call)
     aresponses.add("httpstat.us", "/200", "get", aresponses.passthrough)
@@ -36,6 +39,10 @@ async def test_foo(aresponses):
             text = await response.text()
             assert text == "error"
             assert response.status == 500
+
+        async with session.get(url) as response:
+            text = await response.text()
+            assert text == '{"status": "ok"}'
 
         async with session.get("https://httpstat.us/200") as response:
             text = await response.text()
@@ -63,7 +70,7 @@ async def test_fixture(aresponses):
 
 @pytest.mark.asyncio
 async def test_body_match(aresponses):
-    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), body_match=re.compile(r".*?apple.*"))
+    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), body_pattern=re.compile(r".*?apple.*"))
 
     url = "http://foo.com"
     async with aiohttp.ClientSession() as session:
@@ -233,10 +240,10 @@ async def test_passthrough(aresponses):
 @pytest.mark.asyncio
 async def test_failure_not_called(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
-    with pytest.raises(UnusedResponses):
-        aresponses.assert_no_unused_responses()
+    with pytest.raises(UnusedRouteError):
+        aresponses.assert_no_unused_routes()
 
-    with pytest.raises(UnusedResponses):
+    with pytest.raises(UnusedRouteError):
         aresponses.assert_plan_strictly_followed()
 
 
@@ -248,10 +255,10 @@ async def test_failure_no_match(aresponses):
                 await response.text()
         except ServerDisconnectedError:
             pass
-    with pytest.raises(UnmatchedRequest):
+    with pytest.raises(NoRouteFoundError):
         aresponses.assert_all_requests_matched()
 
-    with pytest.raises(UnmatchedRequest):
+    with pytest.raises(NoRouteFoundError):
         aresponses.assert_plan_strictly_followed()
 
 
@@ -267,11 +274,11 @@ async def test_failure_bad_ordering(aresponses):
             await response.text()
 
     aresponses.assert_all_requests_matched()
-    aresponses.assert_no_unused_responses()
-    with pytest.raises(IncorrectRequestOrder):
+    aresponses.assert_no_unused_routes()
+    with pytest.raises(UnorderedRouteCallError):
         aresponses.assert_called_in_order()
 
-    with pytest.raises(IncorrectRequestOrder):
+    with pytest.raises(UnorderedRouteCallError):
         aresponses.assert_plan_strictly_followed()
 
 
@@ -283,5 +290,22 @@ async def test_failure_not_called_enough_times(aresponses):
         async with session.get("http://foo.com/") as response:
             await response.text()
 
-    with pytest.raises(UnusedResponses):
+    with pytest.raises(UnusedRouteError):
         aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_history(aresponses):
+    aresponses.add(response=aresponses.Response(text="hi"), repeat=2)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://foo.com/b") as response:
+            await response.text()
+        async with session.get("http://bar.com/a") as response:
+            await response.text()
+
+    assert len(aresponses.history) == 2
+    assert aresponses.history[0].request.host == "foo.com"
+    assert aresponses.history[1].request.host == "bar.com"
+    assert "Route(" in repr(aresponses.history[0].route)
+    aresponses.assert_plan_strictly_followed()

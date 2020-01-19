@@ -2,6 +2,7 @@ import asyncio
 import logging
 from copy import copy
 from functools import partial
+from typing import Tuple, List, NamedTuple
 
 import pytest
 from aiohttp import web, ClientSession
@@ -9,29 +10,15 @@ from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
 from aiohttp.helpers import sentinel
 from aiohttp.test_utils import BaseTestServer
-from aiohttp.web_response import StreamResponse
+from aiohttp.web_request import BaseRequest
+from aiohttp.web_response import StreamResponse, json_response
 from aiohttp.web_runner import ServerRunner
 from aiohttp.web_server import Server
 
+from aresponses.errors import NoRouteFoundError, UnusedRouteError, UnorderedRouteCallError
 from aresponses.utils import _text_matches_pattern, ANY
 
 logger = logging.getLogger(__name__)
-
-
-class AresponsesAssertionError(AssertionError):
-    pass
-
-
-class UnmatchedRequest(AresponsesAssertionError):
-    pass
-
-
-class UnusedResponses(AresponsesAssertionError):
-    pass
-
-
-class IncorrectRequestOrder(AresponsesAssertionError):
-    pass
 
 
 class RawResponse(StreamResponse):
@@ -55,6 +42,52 @@ class RawResponse(StreamResponse):
         await super().write_eof(self._body)
 
 
+class Route:
+    def __init__(self, method_pattern=ANY, host_pattern=ANY, path_pattern=ANY, body_pattern=ANY, match_querystring=False, repeat=1):
+        self.method_pattern = method_pattern
+        self.host_pattern = host_pattern
+        self.path_pattern = path_pattern
+        self.body_pattern = body_pattern
+        self.match_querystring = match_querystring
+        self.repeat = repeat
+
+    async def matches(self, request):
+        path_to_match = request.path_qs if self.match_querystring else request.path
+
+        if not _text_matches_pattern(self.host_pattern, request.host):
+            return False
+
+        if not _text_matches_pattern(self.path_pattern, path_to_match):
+            return False
+
+        if not _text_matches_pattern(self.method_pattern, request.method.lower()):
+            return False
+
+        if self.body_pattern != ANY:
+            if not _text_matches_pattern(self.body_pattern, await request.text()):
+                return False
+
+        return True
+
+    def __str__(self):
+        return (
+            f"method={self.method_pattern} host_pattern={self.host_pattern} "
+            f"path={self.path_pattern} body={self.body_pattern} match_querystring={self.match_querystring}"
+        )
+
+    def __repr__(self):
+        return (
+            f"Route(method={repr(self.method_pattern)}, host_pattern={repr(self.host_pattern)}, "
+            f"path={repr(self.path_pattern)}, body={repr(self.body_pattern)}, match_querystring={repr(self.match_querystring)})"
+        )
+
+
+class RoutingLog(NamedTuple):
+    request: BaseRequest
+    route: Route
+    response: StreamResponse
+
+
 class ResponsesMockServer(BaseTestServer):
     ANY = ANY
     Response = web.Response
@@ -64,74 +97,69 @@ class ResponsesMockServer(BaseTestServer):
         self._responses = []
         self._exception = None
         self._unmatched_requests = []
-        self._first_unordered_request = None
+        self._first_unordered_route = None
         self._request_count = 0
-        self.calls = []
+        self._history = []
         super().__init__(scheme=scheme, host=host, **kwargs)
 
     async def _make_runner(self, debug=True, **kwargs):
         srv = Server(self._handler, loop=self._loop, debug=True, **kwargs)
         return ServerRunner(srv, debug=debug, **kwargs)
 
-    async def _close_hook(self):
-        return
-
     async def _handler(self, request):
         self._request_count += 1
-        self.calls.append(request)
-        return await self._find_response(request)
+        route, response = await self._find_response(request)
+        self._history.append(RoutingLog(request, route, response))
+        return response
 
-    def add(self, host, path=ANY, method=ANY, response="", *, body_match=ANY, match_querystring=False, repeat=1):
-        if isinstance(host, str):
-            host = host.lower()
+    def add(self, host_pattern=ANY, path_pattern=ANY, method_pattern=ANY, response="", *, route=None, body_pattern=ANY, match_querystring=False, repeat=1):
+        if isinstance(host_pattern, str):
+            host_pattern = host_pattern.lower()
 
-        if isinstance(method, str):
-            method = method.lower()
+        if isinstance(method_pattern, str):
+            method_pattern = method_pattern.lower()
 
-        self._responses.append((host, path, method, body_match, response, match_querystring, repeat))
+        if route is None:
+            route = Route(
+                method_pattern=method_pattern, host_pattern=host_pattern, path_pattern=path_pattern, body_pattern=body_pattern, match_querystring=match_querystring, repeat=repeat
+            )
+
+        self._responses.append((route, response))
 
     async def _find_response(self, request):
         host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
         logger.info(f"Looking for match for {host} {path} {method}")  # noqa
-        i = -1
-        for host_pattern, path_pattern, method_pattern, body_pattern, response, match_querystring, repeat in self._responses:
-            i += 1
-            if i > 0 and self._first_unordered_request is None:
-                self._first_unordered_request = self._request_count
 
-            path_to_match = path_qs if match_querystring else path
+        for i, (route, response) in enumerate(self._responses):
 
-            if not _text_matches_pattern(host_pattern, host):
+            if not await route.matches(request):
                 continue
 
-            if not _text_matches_pattern(path_pattern, path_to_match):
-                continue
+            route.repeat -= 1
 
-            if not _text_matches_pattern(method_pattern, method.lower()):
-                continue
-
-            if body_pattern != ANY:
-                if not _text_matches_pattern(body_pattern, await request.text()):
-                    continue
-
-            repeat -= 1
-
-            if repeat <= 0:
+            if route.repeat <= 0:
                 del self._responses[i]
             else:
-                self._responses[i] = (host_pattern, path_pattern, method_pattern, body_pattern, copy(response), match_querystring, repeat)
+                self._responses[i] = (route, copy(response))
 
             if callable(response):
                 if asyncio.iscoroutinefunction(response):
-                    return await response(request)
-                return response(request)
+                    response = await response(request)
+                else:
+                    response = response(request)
 
-            if isinstance(response, str):
-                return self.Response(body=response)
+            elif isinstance(response, str):
+                response = self.Response(body=response)
+            elif isinstance(response, (dict, list)):
+                response = json_response(data=response)
 
-            return response
+            if i > 0 and self._first_unordered_route is None:
+                self._first_unordered_route = route
+
+            return route, response
 
         self._unmatched_requests.append(request)
+        return route, None
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
@@ -190,24 +218,28 @@ class ResponsesMockServer(BaseTestServer):
 
         await self.close()
 
-    def assert_no_unused_responses(self):
+    def assert_no_unused_routes(self):
         if self._responses:
-            host, path, method, body_pattern, response, match_querystring, repeat = self._responses[0]
-            raise UnusedResponses(f"Unused Response. host={host} path={path} method={method} body={body_pattern} match_querystring={match_querystring}")
+            route, response = self._responses[0]
+            raise UnusedRouteError(f"Unused Route: {route}")
 
     def assert_called_in_order(self):
-        if self._first_unordered_request is not None:
-            raise IncorrectRequestOrder(f"Request {self._first_unordered_request} was out of order")
+        if self._first_unordered_route is not None:
+            raise UnorderedRouteCallError(f"Route used out of order: {self._first_unordered_route}")
 
     def assert_all_requests_matched(self):
         if self._unmatched_requests:
             request = self._unmatched_requests[0]
-            raise UnmatchedRequest(f"No match found for request: {request.method} {request.host} {request.path}")
+            raise NoRouteFoundError(f"No match found for request: {request.method} {request.host} {request.path}")
 
     def assert_plan_strictly_followed(self):
-        self.assert_no_unused_responses()
+        self.assert_no_unused_routes()
         self.assert_called_in_order()
         self.assert_all_requests_matched()
+
+    @property
+    def history(self) -> List[RoutingLog]:
+        return self._history
 
 
 @pytest.fixture
