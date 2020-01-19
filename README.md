@@ -14,75 +14,168 @@ an asyncio testing server for mocking external services
 ## Features
  - Fast mocks using actual network connections
  - allows mocking some types of network issues
- - use regular expression matching for domain, path, or method 
+ - use regular expression matching for domain, path, method, or body
  - works with https requests as well (by switching them to http requests)
  - works with callables
  
 ## Usage
 
-*aresponses.add(host_pattern, path_pattern, method_pattern, response)*
+Add routes and responses via the `aresponses.add` method:
 
-Host, path, or method may be either strings (exact match) or regular expressions.
-
-When a request is received the first matching response will be returned (based on the order it was received in).
-
-Requires Python 3.6 or greater.
-
-## Example
 ```python
-import pytest
-import aiohttp
-
-@pytest.mark.asyncio
-async def test_foo(aresponses):
-    # text as response (defaults to status 200 response)
-    aresponses.add('foo.com', '/', 'get', 'hi there!!')
-
-    # custom status code response
-    aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
-
-    # passthrough response (makes an actual network call)
-    aresponses.add('httpstat.us', '/200', 'get', aresponses.passthrough)
-
-    # custom handler response
-    def my_handler(request):
-        return aresponses.Response(status=200, text=str(request.url))
-
-    aresponses.add('foo.com', '/', 'get', my_handler)
-    
-    # JSON response
-    aresponses.add(
-        'foo.com', '/', 'get', 
-        aresponses.Response(
-            body=b'{"status":"ok"}', 
-            headers={"Content-Type": "application/json"}
-        )
+def add(
+    host_pattern=ANY, 
+    path_pattern=ANY, 
+    method_pattern=ANY, 
+    response="", 
+    *, 
+    route=None, 
+    body_pattern=ANY, m
+    atch_querystring=False, 
+    repeat=1
     )
-
-    url = 'http://foo.com'
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            text = await response.text()
-            assert text == 'hi there!!'
-
-        async with session.get(url) as response:
-            text = await response.text()
-            assert text == 'error'
-            assert response.status == 500
-
-        async with session.get('https://httpstat.us/200') as response:
-            text = await response.text()
-        assert text == '200 OK'
-
-        async with session.get(url) as response:
-            text = await response.text()
-            assert text == 'http://foo.com/'
-        
-        async with session.get(url) as response:
-            data = await response.json()
-            assert data == {"state": "ok"}
 ```
 
+When a request is received the first matching response will be returned
+and removed from the routing table.  The `response` argument can be
+either a string, Response, dict, or list.  Use `aresponses.Response`
+when you need do something more complex.
+
+
+**Note that version >=2.0 requires explicit assertions!**
+```python
+@pytest.mark.asyncio
+async def test_simple(aresponses):
+    aresponses.add("google.com", "/api/v1/", "GET", response="OK")
+    aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://google.com/api/v1/") as response:
+            text = await response.text()
+            assert text == "OK"
+        
+        async with session.get("https://foo.com") as response:
+            text = await response.text()
+            assert text == "error"
+
+    aresponses.assert_plan_strictly_followed()
+```
+
+#### Assertions
+In aresponses 1.x requests that didn't match a route stopped the event
+loop and thus forced an exception.  In aresponses >2.x it's required to
+make assertions at the end of the test.
+
+There are three assertions functions provided:
+- `aresponses.assert_no_unused_routes` Raises `UnusedRouteError` if all
+the routes defined were not used up.
+- `aresponses.assert_called_in_order` - Raises `UnorderedRouteCallError`
+if the routes weren't called in the order they were defined.
+- `aresponses.assert_all_requests_matched` - Raises `NoRouteFoundError`
+if any requests were made that didn't match to a route.  It's likely
+but not guaranteed that your code will throw an exception in this
+situation before the assertion is reached.
+
+Instead of calling these individually, **it's recommended to call
+`aresponses.assert_plan_strictly_followed()` at the end of each test as
+it runs all three of the above assertions.**
+
+
+#### Regex and Repeat
+`host_pattern`, `path_pattern`, `method_pattern` and `body_pattern` may
+be either strings (exact match) or regular expressions.
+
+The repeat argument permits a route to be used multiple times.
+
+If you want to just blanket mock a service, without concern for how many
+times its called you could set repeat to a large number and not call
+`aresponses.assert_plan_strictly_followed` or
+`arespones.assert_no_unused_routes`.
+
+```python
+@pytest.mark.asyncio
+async def test_regex_repetition(aresponses):
+    aresponses.add(re.compile(r".*\.?google\.com"), response="OK", repeat=2)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://google.com") as response:
+            text = await response.text()
+            assert text == "OK"
+
+        async with session.get("http://api.google.com") as response:
+            text = await response.text()
+            assert text == "OK"
+
+    aresponses.assert_plan_strictly_followed()
+```
+
+#### Json Responses
+As a convenience, if a dict or list is passed to `response` then it will
+create a json response. A `aiohttp.web_response.json_response` object
+can be used for more complex situations.
+
+```python
+@pytest.mark.asyncio
+async def test_json(aresponses):
+    aresponses.add("google.com", "/api/v1/", "GET", response={"status": "OK"})
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://google.com/api/v1/") as response:
+            assert {"status": "OK"} == await response.json()
+
+    aresponses.assert_plan_strictly_followed()
+```
+
+#### Custom Handler
+
+Custom functions can be used for whatever other complex logic is
+desired.
+
+```python
+@pytest.mark.asyncio
+async def test_handler(aresponses):
+    def break_everything(request):
+        return aresponses.Response(status=500, text=str(request.url))
+
+    aresponses.add(response=break_everything, repeat=10**10)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://google.com/api/v1/") as response:
+            assert response.status == 500
+```
+
+
+#### Passthrough
+Pass `aresponses.passthrough` into the response argument to allow a
+request to bypass mocking.
+
+```python
+    aresponses.add('httpstat.us', '/200', 'get', aresponses.passthrough)
+```
+
+#### Inspecting history
+History of calls can be inspected via `aresponses.history` which returns
+the namedTuple `RoutingLog(request, route, response)`
+
+```python
+@pytest.mark.asyncio
+async def test_history(aresponses):
+    aresponses.add(response=aresponses.Response(text="hi"), repeat=2)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("http://foo.com/b") as response:
+            await response.text()
+        async with session.get("http://bar.com/a") as response:
+            await response.text()
+
+    assert len(aresponses.history) == 2
+    assert aresponses.history[0].request.host == "foo.com"
+    assert aresponses.history[1].request.host == "bar.com"
+    assert "Route(" in repr(aresponses.history[0].route)
+    aresponses.assert_plan_strictly_followed()
+```
+
+#### Non-pytest usage
 ```python
 import aiohttp
 import pytest
@@ -105,7 +198,7 @@ async def test_foo(event_loop):
         
 ```
 
-### aresponses with [pytest-aiohttp](https://github.com/aio-libs/pytest-aiohttp)
+#### working with [pytest-aiohttp](https://github.com/aio-libs/pytest-aiohttp)
 
 If you need to use aresponses together with pytest-aiohttp, you should re-initialize main aresponses fixture with `loop` fixture
 ```python
@@ -135,7 +228,20 @@ async def aresponses(loop):
 ### Updating package on pypi
   - `make deploy`
 
+
 ## Changelog
+
+#### 2.0.0
+**Warning! Breaking Changes!**
+- breaking change: require explicit assertions for test failures
+- feature: autocomplete works in intellij/pycharm
+- feature: can match on body of request
+- feature: store calls made
+- feature: repeated responses
+- bugfix: no longer stops event loop
+- feature: if dict or list is passed into `response`, a json response
+will be generated
+
 
 #### 1.1.2
 - make passthrough feature work with binary data

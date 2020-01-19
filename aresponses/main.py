@@ -2,7 +2,7 @@ import asyncio
 import logging
 from copy import copy
 from functools import partial
-from typing import Tuple, List, NamedTuple
+from typing import List, NamedTuple
 
 import pytest
 from aiohttp import web, ClientSession
@@ -113,6 +113,21 @@ class ResponsesMockServer(BaseTestServer):
         return response
 
     def add(self, host_pattern=ANY, path_pattern=ANY, method_pattern=ANY, response="", *, route=None, body_pattern=ANY, match_querystring=False, repeat=1):
+        """
+        Adds a route and response to the mock server.
+
+        When the route is hit `repeat` times it will be removed from the routing table.Z
+
+        :param host_pattern:
+        :param path_pattern:
+        :param method_pattern:
+        :param response:
+        :param route: A Route object.  Overrides all args except for `response`. Useful for custom matching.
+        :param body_pattern:
+        :param match_querystring:
+        :param repeat:
+        :return:
+        """
         if isinstance(host_pattern, str):
             host_pattern = host_pattern.lower()
 
@@ -121,15 +136,17 @@ class ResponsesMockServer(BaseTestServer):
 
         if route is None:
             route = Route(
-                method_pattern=method_pattern, host_pattern=host_pattern, path_pattern=path_pattern, body_pattern=body_pattern, match_querystring=match_querystring, repeat=repeat
+                method_pattern=method_pattern,
+                host_pattern=host_pattern,
+                path_pattern=path_pattern,
+                body_pattern=body_pattern,
+                match_querystring=match_querystring,
+                repeat=repeat,
             )
 
         self._responses.append((route, response))
 
     async def _find_response(self, request):
-        host, path, path_qs, method = request.host, request.path, request.path_qs, request.method
-        logger.info(f"Looking for match for {host} {path} {method}")  # noqa
-
         for i, (route, response) in enumerate(self._responses):
 
             if not await route.matches(request):
@@ -220,7 +237,7 @@ class ResponsesMockServer(BaseTestServer):
 
     def assert_no_unused_routes(self):
         if self._responses:
-            route, response = self._responses[0]
+            route, _ = self._responses[0]
             raise UnusedRouteError(f"Unused Route: {route}")
 
     def assert_called_in_order(self):
