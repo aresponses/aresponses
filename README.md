@@ -129,15 +129,18 @@ async def test_json(aresponses):
 #### Custom Handler
 
 Custom functions can be used for whatever other complex logic is
-desired.
+desired. In example below the handler is set to repeat infinitely
+and always return 500.
 
 ```python
+import math
+
 @pytest.mark.asyncio
 async def test_handler(aresponses):
     def break_everything(request):
         return aresponses.Response(status=500, text=str(request.url))
 
-    aresponses.add(response=break_everything, repeat=10**10)
+    aresponses.add(response=break_everything, repeat=math.inf)
 
     async with aiohttp.ClientSession() as session:
         async with session.get("http://google.com/api/v1/") as response:

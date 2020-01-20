@@ -1,4 +1,6 @@
+import math
 import re
+
 import pytest
 import aiohttp
 
@@ -52,7 +54,7 @@ async def test_handler(aresponses):
     def break_everything(request):
         return aresponses.Response(status=500, text=str(request.url))
 
-    aresponses.add(response=break_everything, repeat=10 ** 10)
+    aresponses.add(response=break_everything, repeat=math.inf)
 
     async with aiohttp.ClientSession() as session:
         async with session.get("http://google.com/api/v1/") as response:
