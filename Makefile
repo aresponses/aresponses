@@ -23,7 +23,7 @@ init: require_pyenv  ## Setup a dev environment for local development.
 	@echo -e "The following commands are available to run in the Makefile\n"
 	@make -s help
 
-
+af: autoformat  ## Alias for `autoformat`
 autoformat:  ## Run the autoformatter.
 	@black .
 

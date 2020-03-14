@@ -16,6 +16,8 @@ matrix:
       env: TEST_CMD="make test"
     - python: "3.8"
       env: TEST_CMD="make lint"
+    - python: "3.9-dev"
+      env: TEST_CMD="make test"
 script: $TEST_CMD
 after_success:
   - codecov
