@@ -31,7 +31,7 @@ def add(
     *, 
     route=None, 
     body_pattern=ANY, m
-    atch_querystring=False, 
+    match_querystring=False, 
     repeat=1
     )
 ```
