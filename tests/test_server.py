@@ -309,3 +309,21 @@ async def test_history(aresponses):
     assert aresponses.history[1].request.host == "bar.com"
     assert "Route(" in repr(aresponses.history[0].route)
     aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_history_post(aresponses):
+    """Ensure the request contets exist in the history"""
+    aresponses.add(method_pattern="POST", response={"some": "response"})
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://bar.com/zzz", json={"greeting": "hello"}) as response:
+            response_data = await response.json()
+            assert response_data == {"some": "response"}
+
+    assert len(aresponses.history) == 1
+    assert aresponses.history[0].request.host == "bar.com"
+    request_data = await aresponses.history[0].request.json()
+    assert request_data == {"greeting": "hello"}
+    assert "Route(" in repr(aresponses.history[0].route)
+    aresponses.assert_plan_strictly_followed()
