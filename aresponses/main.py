@@ -179,7 +179,7 @@ class ResponsesMockServer(BaseTestServer):
             return route, response
 
         self._unmatched_requests.append(request)
-        return route, None
+        return None, None
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
