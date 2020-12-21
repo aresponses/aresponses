@@ -109,6 +109,9 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         self._request_count += 1
         route, response = await self._find_response(request)
+        # ensures the request content is loaded even if the handler didn't need it. This makes it available in the
+        # `aresponses.history`
+        await request.text()
         self._history.append(RoutingLog(request, route, response))
         return response
 
@@ -176,7 +179,7 @@ class ResponsesMockServer(BaseTestServer):
             return route, response
 
         self._unmatched_requests.append(request)
-        return route, None
+        return None, None
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
