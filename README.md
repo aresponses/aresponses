@@ -178,7 +178,7 @@ async def test_history(aresponses):
     aresponses.assert_plan_strictly_followed()
 ```
 
-#### Non-pytest usage
+#### Context manager usage
 ```python
 import aiohttp
 import pytest
