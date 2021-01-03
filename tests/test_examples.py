@@ -1,8 +1,8 @@
 import math
 import re
 
-import pytest
 import aiohttp
+import pytest
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,11 @@ import aiohttp
 import pytest
 from aiohttp import web
 
-from aresponses import ResponsesMockServer
+
+@pytest.fixture
+def loop(event_loop):
+    """replace aiohttp loop fixture with pytest-asyncio fixture"""
+    return event_loop
 
 
 def make_app():
@@ -28,18 +32,14 @@ async def get_ip_address(protocol):
             return ip
 
 
-@pytest.fixture(name="aresponses")
-async def aresponses_fixture(loop):
-    async with ResponsesMockServer(loop=loop) as server:
-        yield server
-
-
+@pytest.mark.asyncio
 async def test_app_simple_endpoint(aiohttp_client):
     client = await aiohttp_client(make_app())
     r = await client.get("/constant")
     assert (await r.text()) == "42"
 
 
+@pytest.mark.asyncio
 async def test_app_simple_endpoint_with_aresponses(aiohttp_client, aresponses):
     """
     when testing your own aiohttp server you must setup passthrough to it
@@ -54,6 +54,7 @@ async def test_app_simple_endpoint_with_aresponses(aiohttp_client, aresponses):
     assert (await r.text()) == "42"
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("protocol", ["http", "https"])
 async def test_app_with_subrequest_using_aresponses(aiohttp_client, aresponses, protocol):
     """
@@ -67,3 +68,4 @@ async def test_app_with_subrequest_using_aresponses(aiohttp_client, aresponses, 
     body = await r.text()
     assert r.status == 200, body
     assert "ip is" in (await r.text())
+    aresponses.assert_plan_strictly_followed()
