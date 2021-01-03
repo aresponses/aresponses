@@ -46,7 +46,7 @@ deploy:  ## Deploy the package to pypi.org
 	@echo "Deploy successful! ✨ 🍰 ✨"
 
 requirements:  ## Freeze the requirements.txt file
-	pip-compile setup.py requirements.in --output-file=requirements.txt
+	pip-compile setup.py requirements.in --output-file=requirements.txt --upgrade
 
 require_pyenv:
 	@if ! [ -x "$$(command -v pyenv)" ]; then\

@@ -8,7 +8,7 @@ aiohttp==3.7.3
     # via aresponses (setup.py)
 appdirs==1.4.4
     # via black
-astroid==2.3.3
+astroid==2.4.2
     # via pylint
 async-timeout==3.0.1
     # via aiohttp
@@ -23,7 +23,7 @@ chardet==3.0.4
     # via aiohttp
 click==7.1.2
     # via black
-coverage==4.5.4
+coverage==5.3.1
     # via
     #   -r requirements.in
     #   pytest-cov
@@ -37,7 +37,9 @@ importlib-metadata==3.3.0
     # via
     #   pluggy
     #   pytest
-isort==4.3.21
+iniconfig==1.1.1
+    # via pytest
+isort==5.7.0
     # via pylint
 lazy-object-proxy==1.4.3
     # via astroid
@@ -45,8 +47,6 @@ mccabe==0.6.1
     # via
     #   pylava
     #   pylint
-more-itertools==8.6.0
-    # via pytest
 multidict==5.1.0
     # via
     #   aiohttp
@@ -59,7 +59,7 @@ py==1.10.0
     # via pytest
 pycodestyle==2.6.0
     # via pylava
-pydocstyle==4.0.1
+pydocstyle==5.1.1
     # via
     #   -r requirements.in
     #   pylava
@@ -67,23 +67,23 @@ pyflakes==2.2.0
     # via pylava
 pylava-pylint==0.0.3
     # via -r requirements.in
-pylava==0.2.2
+pylava==0.3.0
     # via
     #   -r requirements.in
     #   pylava-pylint
-pylint==2.4.4
+pylint==2.6.0
     # via
     #   -r requirements.in
     #   pylava-pylint
 pyparsing==2.4.7
     # via packaging
-pytest-asyncio==0.10.0
+pytest-asyncio==0.14.0
     # via
     #   -r requirements.in
     #   aresponses (setup.py)
-pytest-cov==2.8.1
+pytest-cov==2.10.1
     # via -r requirements.in
-pytest==5.3.1
+pytest==6.2.1
     # via
     #   -r requirements.in
     #   pytest-asyncio
@@ -93,7 +93,10 @@ six==1.15.0
 snowballstemmer==2.0.0
     # via pydocstyle
 toml==0.10.2
-    # via black
+    # via
+    #   black
+    #   pylint
+    #   pytest
 typed-ast==1.4.2
     # via astroid
 typing-extensions==3.7.4.3
@@ -101,9 +104,7 @@ typing-extensions==3.7.4.3
     #   aiohttp
     #   importlib-metadata
     #   yarl
-wcwidth==0.2.5
-    # via pytest
-wrapt==1.11.2
+wrapt==1.12.1
     # via astroid
 yarl==1.6.3
     # via aiohttp
