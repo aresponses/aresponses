@@ -44,7 +44,7 @@ when you need do something more complex.
 
 **Note that version >=2.0 requires explicit assertions!**
 ```python
-@pytest.mark.asyncio
+
 async def test_simple(aresponses):
     aresponses.add("google.com", "/api/v1/", "GET", response="OK")
     aresponses.add('foo.com', '/', 'get', aresponses.Response(text='error', status=500))
@@ -93,7 +93,7 @@ times its called you could set repeat to a large number and not call
 `arespones.assert_no_unused_routes`.
 
 ```python
-@pytest.mark.asyncio
+
 async def test_regex_repetition(aresponses):
     aresponses.add(re.compile(r".*\.?google\.com"), response="OK", repeat=2)
 
@@ -115,7 +115,7 @@ create a json response. A `aiohttp.web_response.json_response` object
 can be used for more complex situations.
 
 ```python
-@pytest.mark.asyncio
+
 async def test_json(aresponses):
     aresponses.add("google.com", "/api/v1/", "GET", response={"status": "OK"})
 
@@ -135,7 +135,7 @@ and always return 500.
 ```python
 import math
 
-@pytest.mark.asyncio
+
 async def test_handler(aresponses):
     def break_everything(request):
         return aresponses.Response(status=500, text=str(request.url))
@@ -161,7 +161,7 @@ History of calls can be inspected via `aresponses.history` which returns
 the namedTuple `RoutingLog(request, route, response)`
 
 ```python
-@pytest.mark.asyncio
+
 async def test_history(aresponses):
     aresponses.add(response=aresponses.Response(text="hi"), repeat=2)
 
@@ -184,13 +184,13 @@ import aiohttp
 import pytest
 import aresponses
 
-@pytest.mark.asyncio
-async def test_foo(event_loop):
-    async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
+
+async def test_foo(loop):
+    async with aresponses.ResponsesMockServer(loop=loop) as arsps:
         arsps.add('foo.com', '/', 'get', 'hi there!!')
         arsps.add(arsps.ANY, '/', 'get', arsps.Response(text='hey!'))
         
-        async with aiohttp.ClientSession(loop=event_loop) as session:
+        async with aiohttp.ClientSession(loop=loop) as session:
             async with session.get('http://foo.com') as response:
                 text = await response.text()
                 assert text == 'hi'

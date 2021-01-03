@@ -9,7 +9,6 @@ import aresponses as aresponses_mod
 from aresponses.errors import NoRouteFoundError, UnusedRouteError, UnorderedRouteCallError
 
 
-@pytest.mark.asyncio
 async def test_foo(aresponses):
     # text as response (defaults to status 200 response)
     aresponses.add("foo.com", "/", "get", "hi there!!")
@@ -55,7 +54,6 @@ async def test_foo(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_fixture(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
 
@@ -68,7 +66,6 @@ async def test_fixture(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_body_match(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), body_pattern=re.compile(r".*?apple.*"))
 
@@ -84,7 +81,6 @@ async def test_body_match(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_https(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
 
@@ -97,9 +93,8 @@ async def test_https(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
-async def test_context_manager(event_loop):
-    async with aresponses_mod.ResponsesMockServer(loop=event_loop) as arsps:
+async def test_context_manager(loop):
+    async with aresponses_mod.ResponsesMockServer(loop=loop) as arsps:
         arsps.add("foo.com", "/", "get", aresponses_mod.Response(text="hi"))
 
         url = "http://foo.com"
@@ -111,7 +106,6 @@ async def test_context_manager(event_loop):
     arsps.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_bad_redirect(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi", status=301))
     url = "http://foo.com"
@@ -122,7 +116,6 @@ async def test_bad_redirect(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_regex(aresponses):
     aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="hi"))
     aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="there"))
@@ -139,7 +132,6 @@ async def test_regex(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_callable(aresponses):
     def handler(request):
         return aresponses.Response(body=request.host)
@@ -159,7 +151,6 @@ async def test_callable(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_raw_response(aresponses):
     raw_response = b"""HTTP/1.1 200 OK\r
 Date: Tue, 26 Dec 2017 05:47:50 GMT\r
@@ -176,7 +167,6 @@ Date: Tue, 26 Dec 2017 05:47:50 GMT\r
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_querystring(aresponses):
     aresponses.add("foo.com", "/path", "get", aresponses.Response(text="hi"))
 
@@ -197,7 +187,6 @@ async def test_querystring(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_querystring_not_match(aresponses):
     aresponses.add("foo.com", "/path", "get", aresponses.Response(text="hi"), match_querystring=True)
     aresponses.add("foo.com", aresponses.ANY, "get", aresponses.Response(text="miss"), match_querystring=True)
@@ -224,7 +213,6 @@ async def test_querystring_not_match(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_passthrough(aresponses):
     aresponses.add("httpstat.us", "/200", "get", aresponses.passthrough)
 
@@ -237,7 +225,6 @@ async def test_passthrough(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_not_called(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
     with pytest.raises(UnusedRouteError):
@@ -247,7 +234,6 @@ async def test_failure_not_called(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_no_match(aresponses):
     async with aiohttp.ClientSession() as session:
         try:
@@ -262,7 +248,6 @@ async def test_failure_no_match(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_bad_ordering(aresponses):
     aresponses.add("foo.com", "/a", "get", aresponses.Response(text="hi"))
     aresponses.add("foo.com", "/b", "get", aresponses.Response(text="hi"))
@@ -282,7 +267,6 @@ async def test_failure_bad_ordering(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_not_called_enough_times(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), repeat=2)
 
@@ -294,7 +278,6 @@ async def test_failure_not_called_enough_times(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_history(aresponses):
     aresponses.add(response=aresponses.Response(text="hi"), repeat=2)
 
@@ -311,7 +294,6 @@ async def test_history(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_history_post(aresponses):
     """Ensure the request contets exist in the history"""
     aresponses.add(method_pattern="POST", response={"some": "response"})

@@ -2,8 +2,6 @@ import aiohttp
 import pytest
 from aiohttp import web
 
-from aresponses import ResponsesMockServer
-
 
 def make_app():
     app = web.Application()
@@ -26,12 +24,6 @@ async def get_ip_address(protocol):
         async with s.get(f"{protocol}://httpbin.org/ip") as resp:
             ip = (await resp.json())["origin"]
             return ip
-
-
-@pytest.fixture(name="aresponses")
-async def aresponses_fixture(loop):
-    async with ResponsesMockServer(loop=loop) as server:
-        yield server
 
 
 async def test_app_simple_endpoint(aiohttp_client):
@@ -67,3 +59,4 @@ async def test_app_with_subrequest_using_aresponses(aiohttp_client, aresponses, 
     body = await r.text()
     assert r.status == 200, body
     assert "ip is" in (await r.text())
+    aresponses.assert_plan_strictly_followed()

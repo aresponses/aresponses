@@ -37,7 +37,7 @@ lint:  ## Run the code linter.
 
 deploy:  ## Deploy the package to pypi.org
 	pip install twine wheel
-	git tag $$(python setup.py -V)
+	#git tag $$(python setup.py -V)
 	git push --tags
 	python setup.py bdist_wheel
 	python setup.py sdist

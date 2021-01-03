@@ -1,11 +1,9 @@
 import math
 import re
 
-import pytest
 import aiohttp
 
 
-@pytest.mark.asyncio
 async def test_simple(aresponses):
     aresponses.add("google.com", "/api/v1/", "GET", response="OK")
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="error", status=500))
@@ -22,7 +20,6 @@ async def test_simple(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_regex_repetition(aresponses):
     aresponses.add(re.compile(r".*\.?google\.com"), response="OK", repeat=2)
 
@@ -38,7 +35,6 @@ async def test_regex_repetition(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_json(aresponses):
     aresponses.add("google.com", "/api/v1/", "GET", response={"status": "OK"})
 
@@ -49,7 +45,6 @@ async def test_json(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_handler(aresponses):
     def break_everything(request):
         return aresponses.Response(status=500, text=str(request.url))
