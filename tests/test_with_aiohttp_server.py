@@ -51,10 +51,10 @@ async def test_app_with_subrequest_using_aresponses(aiohttp_client, aresponses, 
     """
     but passthrough doesn't work if the handler itself makes an aiohttp https request
     """
-    aresponses.add("127.0.0.1:4241", response=aresponses.passthrough)
+    aresponses.add_local_passthrough(repeat=1)
     aresponses.add("httpbin.org", response={"origin": "1.2.3.4"})
 
-    client = await aiohttp_client(make_app(), server_kwargs={"port": 4241})
+    client = await aiohttp_client(make_app())
     r = await client.get(f"/ip?protocol={protocol}")
     body = await r.text()
     assert r.status == 200, body

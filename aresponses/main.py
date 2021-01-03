@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import math
+import re
 from copy import copy
-from functools import partial
 from typing import List, NamedTuple
 
 import pytest
@@ -92,6 +93,8 @@ class ResponsesMockServer(BaseTestServer):
     ANY = ANY
     Response = web.Response
     RawResponse = RawResponse
+    INFINITY = math.inf
+    LOCALHOST = re.compile(r"127\.0\.0\.1:?\d{0,5}")
 
     def __init__(self, *, scheme=sentinel, host="127.0.0.1", **kwargs):
         self._responses = []
@@ -148,6 +151,9 @@ class ResponsesMockServer(BaseTestServer):
             )
 
         self._responses.append((route, response))
+
+    def add_local_passthrough(self, repeat=INFINITY):
+        self.add(host_pattern=self.LOCALHOST, repeat=repeat, response=self.passthrough)
 
     async def _find_response(self, request):
         for i, (route, response) in enumerate(self._responses):
@@ -243,10 +249,10 @@ class ResponsesMockServer(BaseTestServer):
 
         await self.close()
 
-    def assert_no_unused_routes(self):
-        if self._responses:
-            route, _ = self._responses[0]
-            raise UnusedRouteError(f"Unused Route: {route}")
+    def assert_no_unused_routes(self, ignore_infinite_repeats=False):
+        for route, _ in self._responses:
+            if not ignore_infinite_repeats or route.repeat != self.INFINITY:
+                raise UnusedRouteError(f"Unused Route: {route}")
 
     def assert_called_in_order(self):
         if self._first_unordered_route is not None:
