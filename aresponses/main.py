@@ -1,7 +1,8 @@
 import asyncio
 import logging
+import math
+import re
 from copy import copy
-from functools import partial
 from typing import List, NamedTuple
 
 import pytest
@@ -38,7 +39,7 @@ class RawResponse(StreamResponse):
         writer = self._payload_writer = request._payload_writer
         return writer
 
-    async def write_eof(self, *_, **__):
+    async def write_eof(self, *_, **__):  # noqa
         await super().write_eof(self._body)
 
 
@@ -92,6 +93,8 @@ class ResponsesMockServer(BaseTestServer):
     ANY = ANY
     Response = web.Response
     RawResponse = RawResponse
+    INFINITY = math.inf
+    LOCALHOST = re.compile(r"127\.0\.0\.1:?\d{0,5}")
 
     def __init__(self, *, scheme=sentinel, host="127.0.0.1", **kwargs):
         self._responses = []
@@ -149,6 +152,9 @@ class ResponsesMockServer(BaseTestServer):
 
         self._responses.append((route, response))
 
+    def add_local_passthrough(self, repeat=INFINITY):
+        self.add(host_pattern=self.LOCALHOST, repeat=repeat, response=self.passthrough)
+
     async def _find_response(self, request):
         for i, (route, response) in enumerate(self._responses):
 
@@ -183,24 +189,28 @@ class ResponsesMockServer(BaseTestServer):
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
-        connector = TCPConnector()
-        connector._resolve_host = partial(self._old_resolver_mock, connector)
 
-        new_is_ssl = ClientRequest.is_ssl
-        ClientRequest.is_ssl = self._old_is_ssl
-        try:
-            original_request = request.clone(scheme="https" if request.headers["AResponsesIsSSL"] else "http")
+        class DirectTcpConnector(TCPConnector):
+            def _resolve_host(slf, *args, **kwargs):  # noqa
+                return self._old_resolver_mock(slf, *args, **kwargs)
 
-            headers = {k: v for k, v in request.headers.items() if k != "AResponsesIsSSL"}
+        class DirectClientRequest(ClientRequest):
+            def is_ssl(slf) -> bool:
+                return slf._aresponses_direct_is_ssl()
 
-            async with ClientSession(connector=connector) as session:
-                async with getattr(session, request.method.lower())(original_request.url, headers=headers, data=(await request.read())) as r:
-                    headers = {k: v for k, v in r.headers.items() if k.lower() == "content-type"}
-                    data = await r.read()
-                    response = self.Response(body=data, status=r.status, headers=headers)
-                    return response
-        finally:
-            ClientRequest.is_ssl = new_is_ssl
+        connector = DirectTcpConnector()
+
+        original_request = request.clone(scheme="https" if request.headers["AResponsesIsSSL"] else "http")
+
+        headers = {k: v for k, v in request.headers.items() if k != "AResponsesIsSSL"}
+
+        async with ClientSession(connector=connector, request_class=DirectClientRequest) as session:
+            request_method = getattr(session, request.method.lower())
+            async with request_method(original_request.url, headers=headers, data=(await request.read())) as r:
+                headers = {k: v for k, v in r.headers.items() if k.lower() == "content-type"}
+                data = await r.read()
+                response = self.Response(body=data, status=r.status, headers=headers)
+                return response
 
     async def __aenter__(self) -> "ResponsesMockServer":
         await self.start_server(loop=self._loop)
@@ -213,6 +223,7 @@ class ResponsesMockServer(BaseTestServer):
         TCPConnector._resolve_host = _resolver_mock
 
         self._old_is_ssl = ClientRequest.is_ssl
+        ClientRequest._aresponses_direct_is_ssl = ClientRequest.is_ssl
 
         def new_is_ssl(_self):
             return False
@@ -238,10 +249,10 @@ class ResponsesMockServer(BaseTestServer):
 
         await self.close()
 
-    def assert_no_unused_routes(self):
-        if self._responses:
-            route, _ = self._responses[0]
-            raise UnusedRouteError(f"Unused Route: {route}")
+    def assert_no_unused_routes(self, ignore_infinite_repeats=False):
+        for route, _ in self._responses:
+            if not ignore_infinite_repeats or route.repeat != self.INFINITY:
+                raise UnusedRouteError(f"Unused Route: {route}")
 
     def assert_called_in_order(self):
         if self._first_unordered_route is not None:

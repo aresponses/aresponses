@@ -184,6 +184,7 @@ import aiohttp
 import pytest
 import aresponses
 
+
 @pytest.mark.asyncio
 async def test_foo(event_loop):
     async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
@@ -211,6 +212,15 @@ from aresponses import ResponsesMockServer
 async def aresponses(loop):
     async with ResponsesMockServer(loop=loop) as server:
         yield server
+```
+
+If you're trying to use the `aiohttp_client` test fixture then you'll need to mock out the aiohttp `loop` fixture
+instead:
+```python
+@pytest.fixture
+def loop(event_loop):
+    """replace aiohttp loop fixture with pytest-asyncio fixture"""
+    return event_loop
 ```
 
 ## Contributing
