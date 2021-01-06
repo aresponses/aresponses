@@ -313,7 +313,7 @@ async def test_history(aresponses):
 
 @pytest.mark.asyncio
 async def test_history_post(aresponses):
-    """Ensure the request contets exist in the history"""
+    """Ensure the request contents exist in the history"""
     aresponses.add(method_pattern="POST", response={"some": "response"})
 
     async with aiohttp.ClientSession() as session:
