@@ -244,6 +244,13 @@ def loop(event_loop):
 
 ## Changelog
 
+#### 2.1.0
+- feature: add convenience method `add_local_passthrough`
+- bugfix: fix https subrequest mocks. support aiohttp_client compatibility
+
+#### 2.0.2
+- bugfix: ensure request body is available in history
+
 #### 2.0.0
 **Warning! Breaking Changes!**
 - breaking change: require explicit assertions for test failures
