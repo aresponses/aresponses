@@ -85,13 +85,17 @@ class Route:
     def __str__(self):
         return (
             f"method={self.method_pattern} host_pattern={self.host_pattern} "
-            f"path={self.path_pattern} body={self.body_pattern} match_querystring={self.match_querystring}"
+            f"path={self.path_pattern} body={self.body_pattern} "
+            f"match_querystring={self.match_querystring}"
         )
 
     def __repr__(self):
         return (
-            f"Route(method={repr(self.method_pattern)}, host_pattern={repr(self.host_pattern)}, "
-            f"path={repr(self.path_pattern)}, body={repr(self.body_pattern)}, match_querystring={repr(self.match_querystring)})"
+            f"Route(method={repr(self.method_pattern)}, "
+            f"host_pattern={repr(self.host_pattern)}, "
+            f"path={repr(self.path_pattern)}, "
+            f"body={repr(self.body_pattern)}, "
+            f"match_querystring={repr(self.match_querystring)})"
         )
 
 
@@ -124,8 +128,8 @@ class ResponsesMockServer(BaseTestServer):
     async def _handler(self, request):
         self._request_count += 1
         route, response = await self._find_response(request)
-        # ensures the request content is loaded even if the handler didn't need it. This makes it available in the
-        # `aresponses.history`
+        # ensures the request content is loaded even if the handler didn't
+        # need it. This makes it available in`aresponses.history`
         await request.text()
         self._history.append(RoutingLog(request, route, response))
         return response
@@ -151,7 +155,8 @@ class ResponsesMockServer(BaseTestServer):
         :param path_pattern:
         :param method_pattern:
         :param response:
-        :param route: A Route object.  Overrides all args except for `response`. Useful for custom matching.
+        :param route: A Route object.  Overrides all args except for `response`.
+                        Useful for custom matching.
         :param body_pattern:
         :param match_querystring:
         :param repeat:
@@ -218,7 +223,7 @@ class ResponsesMockServer(BaseTestServer):
                 return self._old_resolver_mock(slf, *args, **kwargs)
 
         class DirectClientRequest(ClientRequest):
-            def is_ssl(slf) -> bool:
+            def is_ssl(slf) -> bool:  # noqa
                 return slf._aresponses_direct_is_ssl()
 
         connector = DirectTcpConnector()
@@ -304,7 +309,8 @@ class ResponsesMockServer(BaseTestServer):
         if self._unmatched_requests:
             request = self._unmatched_requests[0]
             raise NoRouteFoundError(
-                f"No match found for request: {request.method} {request.host} {request.path}"
+                f"No match found for request: "
+                f"{request.method} {request.host} {request.path}"
             )
 
     def assert_plan_strictly_followed(self):
@@ -317,7 +323,7 @@ class ResponsesMockServer(BaseTestServer):
         return self._history
 
 
-@pytest.fixture
+@pytest.fixture()
 async def aresponses(event_loop) -> ResponsesMockServer:
     async with ResponsesMockServer(loop=event_loop) as server:
         yield server

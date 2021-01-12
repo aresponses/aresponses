@@ -3,7 +3,7 @@ import pytest
 from aiohttp import web
 
 
-@pytest.fixture
+@pytest.fixture()
 def loop(event_loop):
     """replace aiohttp loop fixture with pytest-asyncio fixture"""
     return event_loop
