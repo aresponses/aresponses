@@ -294,6 +294,9 @@ class ResponsesMockServer(BaseTestServer):
 
         await self.close()
 
+
+
+
     def assert_no_unused_routes(self, ignore_infinite_repeats=False):
         for route, _ in self._responses:
             if not ignore_infinite_repeats or route.repeat != self.INFINITY:
@@ -323,7 +326,7 @@ class ResponsesMockServer(BaseTestServer):
         return self._history
 
 
-@pytest.fixture()
+@pytest.fixture
 async def aresponses(event_loop) -> ResponsesMockServer:
     async with ResponsesMockServer(loop=event_loop) as server:
         yield server

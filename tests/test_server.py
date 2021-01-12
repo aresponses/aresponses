@@ -14,7 +14,7 @@ from aresponses.errors import (
 
 
 @pytest.mark.asyncio
-async def test_foo(aresponses):
+async def testFoo(aresponses):
     # text as response (defaults to status 200 response)
     aresponses.add("foo.com", "/", "get", "hi there!!")
 
