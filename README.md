@@ -4,8 +4,7 @@
 
 [![image](https://img.shields.io/pypi/v/aresponses.svg)](https://pypi.org/project/aresponses/)
 [![image](https://img.shields.io/pypi/pyversions/aresponses.svg)](https://pypi.org/project/aresponses/)
-[![build status](https://travis-ci.org/CircleUp/aresponses.svg)](https://travis-ci.org/CircleUp/aresponses)
-[![codecov.io](https://codecov.io/github/CircleUp/aresponses/coverage.svg?branch=master)](https://codecov.io/github/CircleUp/aresponses)
+[![build status](https://github.com/CircleUp/aresponses/workflows/Python%20Checks/badge.svg)](https://github.com/CircleUp/aresponses/actions?query=branch%3Amaster)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
