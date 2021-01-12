@@ -6,7 +6,9 @@ setup(
     name="aresponses",
     packages=["aresponses"],
     version=__version__,
-    description="Asyncio testing server. Similar to the responses library used for 'requests'",
+    description="""
+    Asyncio testing server. Similar to the responses library used for 'requests'
+    """.strip(),
     author="Bryce Drennan, CircleUp",
     author_email="aresponses@brycedrennan.com   ",
     url="https://github.com/circleup/aresponses",

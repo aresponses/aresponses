@@ -6,7 +6,11 @@ from aiohttp import ServerDisconnectedError
 import aresponses as aresponses_mod
 
 # example test in readme.md
-from aresponses.errors import NoRouteFoundError, UnusedRouteError, UnorderedRouteCallError
+from aresponses.errors import (
+    NoRouteFoundError,
+    UnusedRouteError,
+    UnorderedRouteCallError,
+)
 
 
 @pytest.mark.asyncio
@@ -70,7 +74,13 @@ async def test_fixture(aresponses):
 
 @pytest.mark.asyncio
 async def test_body_match(aresponses):
-    aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), body_pattern=re.compile(r".*?apple.*"))
+    aresponses.add(
+        "foo.com",
+        "/",
+        "get",
+        aresponses.Response(text="hi"),
+        body_pattern=re.compile(r".*?apple.*"),
+    )
 
     url = "http://foo.com"
     async with aiohttp.ClientSession() as session:
@@ -124,8 +134,15 @@ async def test_bad_redirect(aresponses):
 
 @pytest.mark.asyncio
 async def test_regex(aresponses):
-    aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="hi"))
-    aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="there"))
+    aresponses.add(
+        aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="hi")
+    )
+    aresponses.add(
+        aresponses.ANY,
+        aresponses.ANY,
+        aresponses.ANY,
+        aresponses.Response(text="there"),
+    )
 
     async with aiohttp.ClientSession() as session:
         async with session.get("http://foo.com") as response:
@@ -166,7 +183,12 @@ Date: Tue, 26 Dec 2017 05:47:50 GMT\r
 \r
 <html><body><h1>It works!</h1></body></html>
 """
-    aresponses.add(aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.RawResponse(raw_response))
+    aresponses.add(
+        aresponses.ANY,
+        aresponses.ANY,
+        aresponses.ANY,
+        aresponses.RawResponse(raw_response),
+    )
 
     async with aiohttp.ClientSession() as session:
         async with session.get("http://foo.com") as response:
@@ -186,7 +208,13 @@ async def test_querystring(aresponses):
             text = await response.text()
     assert text == "hi"
 
-    aresponses.add("foo.com", "/path2?reply=42", "get", aresponses.Response(text="hi"), match_querystring=True)
+    aresponses.add(
+        "foo.com",
+        "/path2?reply=42",
+        "get",
+        aresponses.Response(text="hi"),
+        match_querystring=True,
+    )
 
     url = "http://foo.com/path2?reply=42"
     async with aiohttp.ClientSession() as session:
@@ -199,9 +227,27 @@ async def test_querystring(aresponses):
 
 @pytest.mark.asyncio
 async def test_querystring_not_match(aresponses):
-    aresponses.add("foo.com", "/path", "get", aresponses.Response(text="hi"), match_querystring=True)
-    aresponses.add("foo.com", aresponses.ANY, "get", aresponses.Response(text="miss"), match_querystring=True)
-    aresponses.add("foo.com", aresponses.ANY, "get", aresponses.Response(text="miss"), match_querystring=True)
+    aresponses.add(
+        "foo.com",
+        "/path",
+        "get",
+        aresponses.Response(text="hi"),
+        match_querystring=True,
+    )
+    aresponses.add(
+        "foo.com",
+        aresponses.ANY,
+        "get",
+        aresponses.Response(text="miss"),
+        match_querystring=True,
+    )
+    aresponses.add(
+        "foo.com",
+        aresponses.ANY,
+        "get",
+        aresponses.Response(text="miss"),
+        match_querystring=True,
+    )
 
     url = "http://foo.com/path"
     async with aiohttp.ClientSession() as session:
@@ -317,7 +363,9 @@ async def test_history_post(aresponses):
     aresponses.add(method_pattern="POST", response={"some": "response"})
 
     async with aiohttp.ClientSession() as session:
-        async with session.post("http://bar.com/zzz", json={"greeting": "hello"}) as response:
+        async with session.post(
+            "http://bar.com/zzz", json={"greeting": "hello"}
+        ) as response:
             response_data = await response.json()
             assert response_data == {"some": "response"}
 
