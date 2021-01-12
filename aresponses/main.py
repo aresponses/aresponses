@@ -16,7 +16,11 @@ from aiohttp.web_response import StreamResponse, json_response
 from aiohttp.web_runner import ServerRunner
 from aiohttp.web_server import Server
 
-from aresponses.errors import NoRouteFoundError, UnusedRouteError, UnorderedRouteCallError
+from aresponses.errors import (
+    NoRouteFoundError,
+    UnusedRouteError,
+    UnorderedRouteCallError,
+)
 from aresponses.utils import _text_matches_pattern, ANY
 
 logger = logging.getLogger(__name__)
@@ -44,7 +48,15 @@ class RawResponse(StreamResponse):
 
 
 class Route:
-    def __init__(self, method_pattern=ANY, host_pattern=ANY, path_pattern=ANY, body_pattern=ANY, match_querystring=False, repeat=1):
+    def __init__(
+        self,
+        method_pattern=ANY,
+        host_pattern=ANY,
+        path_pattern=ANY,
+        body_pattern=ANY,
+        match_querystring=False,
+        repeat=1,
+    ):
         self.method_pattern = method_pattern
         self.host_pattern = host_pattern
         self.path_pattern = path_pattern
@@ -118,7 +130,18 @@ class ResponsesMockServer(BaseTestServer):
         self._history.append(RoutingLog(request, route, response))
         return response
 
-    def add(self, host_pattern=ANY, path_pattern=ANY, method_pattern=ANY, response="", *, route=None, body_pattern=ANY, match_querystring=False, repeat=1):
+    def add(
+        self,
+        host_pattern=ANY,
+        path_pattern=ANY,
+        method_pattern=ANY,
+        response="",
+        *,
+        route=None,
+        body_pattern=ANY,
+        match_querystring=False,
+        repeat=1,
+    ):
         """
         Adds a route and response to the mock server.
 
@@ -200,14 +223,22 @@ class ResponsesMockServer(BaseTestServer):
 
         connector = DirectTcpConnector()
 
-        original_request = request.clone(scheme="https" if request.headers["AResponsesIsSSL"] else "http")
+        original_request = request.clone(
+            scheme="https" if request.headers["AResponsesIsSSL"] else "http"
+        )
 
         headers = {k: v for k, v in request.headers.items() if k != "AResponsesIsSSL"}
 
-        async with ClientSession(connector=connector, request_class=DirectClientRequest) as session:
+        async with ClientSession(
+            connector=connector, request_class=DirectClientRequest
+        ) as session:
             request_method = getattr(session, request.method.lower())
-            async with request_method(original_request.url, headers=headers, data=(await request.read())) as r:
-                headers = {k: v for k, v in r.headers.items() if k.lower() == "content-type"}
+            async with request_method(
+                original_request.url, headers=headers, data=(await request.read())
+            ) as r:
+                headers = {
+                    k: v for k, v in r.headers.items() if k.lower() == "content-type"
+                }
                 data = await r.read()
                 response = self.Response(body=data, status=r.status, headers=headers)
                 return response
@@ -218,7 +249,16 @@ class ResponsesMockServer(BaseTestServer):
         self._old_resolver_mock = TCPConnector._resolve_host
 
         async def _resolver_mock(_self, host, port, traces=None):
-            return [{"hostname": host, "host": "127.0.0.1", "port": self.port, "family": _self._family, "proto": 0, "flags": 0}]
+            return [
+                {
+                    "hostname": host,
+                    "host": "127.0.0.1",
+                    "port": self.port,
+                    "family": _self._family,
+                    "proto": 0,
+                    "flags": 0,
+                }
+            ]
 
         TCPConnector._resolve_host = _resolver_mock
 
@@ -256,12 +296,16 @@ class ResponsesMockServer(BaseTestServer):
 
     def assert_called_in_order(self):
         if self._first_unordered_route is not None:
-            raise UnorderedRouteCallError(f"Route used out of order: {self._first_unordered_route}")
+            raise UnorderedRouteCallError(
+                f"Route used out of order: {self._first_unordered_route}"
+            )
 
     def assert_all_requests_matched(self):
         if self._unmatched_requests:
             request = self._unmatched_requests[0]
-            raise NoRouteFoundError(f"No match found for request: {request.method} {request.host} {request.path}")
+            raise NoRouteFoundError(
+                f"No match found for request: {request.method} {request.host} {request.path}"
+            )
 
     def assert_plan_strictly_followed(self):
         self.assert_no_unused_routes()

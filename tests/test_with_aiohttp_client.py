@@ -56,7 +56,9 @@ async def test_app_simple_endpoint_with_aresponses(aiohttp_client, aresponses):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("protocol", ["http", "https"])
-async def test_app_with_subrequest_using_aresponses(aiohttp_client, aresponses, protocol):
+async def test_app_with_subrequest_using_aresponses(
+    aiohttp_client, aresponses, protocol
+):
     """
     but passthrough doesn't work if the handler itself makes an aiohttp https request
     """
