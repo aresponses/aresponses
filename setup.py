@@ -1,14 +1,22 @@
+from os import path
+
 from setuptools import setup
 
 __version__ = "2.1.1"
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name="aresponses",
     packages=["aresponses"],
     version=__version__,
     description="""
-    Asyncio testing server. Similar to the responses library used for 'requests'
+    Asyncio response mocking. Similar to the responses library used for 'requests'
     """.strip(),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Bryce Drennan, CircleUp",
     author_email="aresponses@brycedrennan.com   ",
     url="https://github.com/circleup/aresponses",
