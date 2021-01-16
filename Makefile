@@ -42,6 +42,8 @@ deploy:  ## Deploy the package to pypi.org
 	python setup.py sdist
 	@echo 'pypi.org Username: '
 	@read username && twine upload dist/* -u $$username;
+	rm -rf build
+	rm -rf dist
 	@echo "Deploy successful! ✨ 🍰 ✨"
 
 requirements:  ## Freeze the requirements.txt file
