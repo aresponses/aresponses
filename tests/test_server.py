@@ -1,6 +1,7 @@
 import re
 import aiohttp
 import pytest
+import sys
 from aiohttp import ServerDisconnectedError
 
 import aresponses as aresponses_mod
@@ -375,3 +376,23 @@ async def test_history_post(aresponses):
     assert request_data == {"greeting": "hello"}
     assert "Route(" in repr(aresponses.history[0].route)
     aresponses.assert_plan_strictly_followed()
+
+
+@pytest.fixture()
+def _short_recursion_limit():
+    # The default is 1000, but it takes time (seconds); 100 is much faster.
+    old_limit = sys.getrecursionlimit()
+    sys.setrecursionlimit(100)
+    yield
+    sys.setrecursionlimit(old_limit)
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_short_recursion_limit")
+async def test_not_exceeding_recursion_limit(event_loop):
+    for _ in range(sys.getrecursionlimit()):
+        async with aresponses_mod.ResponsesMockServer(loop=event_loop) as arsps:
+            arsps.add("fake-host", "/", "get", "hello")
+            async with aiohttp.ClientSession() as session:
+                async with session.get("http://fake-host"):
+                    pass

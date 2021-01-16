@@ -291,6 +291,7 @@ class ResponsesMockServer(BaseTestServer):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         TCPConnector._resolve_host = self._old_resolver_mock
         ClientRequest.is_ssl = self._old_is_ssl
+        ClientRequest.__init__ = self._old_init
 
         await self.close()
 
