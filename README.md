@@ -243,6 +243,9 @@ def loop(event_loop):
 
 ## Changelog
 
+#### 2.1.2-rc.1
+- documentation: add pypi documentation
+
 #### 2.1.1
 
 - bugfix: RecursionError when aresponses is used in more than 1000 tests (#63)
