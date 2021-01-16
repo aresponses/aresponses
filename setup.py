@@ -1,6 +1,6 @@
 from setuptools import setup
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 setup(
     name="aresponses",
@@ -18,6 +18,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: MIT License",
     ],
     python_requires=">=3.6",

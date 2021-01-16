@@ -38,7 +38,7 @@ def add(
 When a request is received the first matching response will be returned
 and removed from the routing table.  The `response` argument can be
 either a string, Response, dict, or list.  Use `aresponses.Response`
-when you need do something more complex.
+when you need to do something more complex.
 
 
 **Note that version >=2.0 requires explicit assertions!**
@@ -242,6 +242,10 @@ def loop(event_loop):
 
 
 ## Changelog
+
+#### 2.1.1
+
+- bugfix: RecursionError when aresponses is used in more than 1000 tests (#63)
 
 #### 2.1.0
 - feature: add convenience method `add_local_passthrough`
