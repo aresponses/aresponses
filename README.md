@@ -243,7 +243,7 @@ def loop(event_loop):
 
 ## Changelog
 
-#### 2.1.2-rc.1
+#### 2.1.2
 - documentation: add pypi documentation
 
 #### 2.1.1
