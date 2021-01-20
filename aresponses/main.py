@@ -130,7 +130,7 @@ class ResponsesMockServer(BaseTestServer):
         route, response = await self._find_response(request)
         # ensures the request content is loaded even if the handler didn't
         # need it. This makes it available in`aresponses.history`
-        await request.text()
+        await request.read()
         self._history.append(RoutingLog(request, route, response))
         return response
 
