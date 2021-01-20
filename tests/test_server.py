@@ -1,4 +1,5 @@
 import re
+
 import aiohttp
 import pytest
 import sys
@@ -376,6 +377,27 @@ async def test_history_post(aresponses):
     assert request_data == {"greeting": "hello"}
     assert "Route(" in repr(aresponses.history[0].route)
     aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+async def test_history_post_binary(aresponses):
+    """
+    Ensure the request contents exist in the history
+
+    ...and that it can handle binary requests
+    """
+    binary_not_utf = b"o\xad<|6\xd2a\x116\x17\xdb\x98-60:"
+    aresponses.add(method_pattern="POST", response={"some": "response"})
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post("http://bar.com/zzz", data=binary_not_utf) as response:
+            response_data = await response.json()
+            assert response_data == {"some": "response"}
+
+    assert len(aresponses.history) == 1
+    assert aresponses.history[0].request.host == "bar.com"
+    request_data = await aresponses.history[0].request.read()
+    assert request_data == binary_not_utf
 
 
 @pytest.fixture()
