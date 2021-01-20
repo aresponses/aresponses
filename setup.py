@@ -2,7 +2,7 @@ from os import path
 
 from setuptools import setup
 
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
