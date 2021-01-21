@@ -243,6 +243,12 @@ def loop(event_loop):
 
 ## Changelog
 
+#### 2.1.4
+- fix: don't assume utf8 request contents
+
+#### 2.1.3
+- accidental no-op release
+
 #### 2.1.2
 - documentation: add pypi documentation
 
