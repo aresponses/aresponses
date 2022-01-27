@@ -5,7 +5,7 @@ import re
 from copy import copy
 from typing import List, NamedTuple
 
-import pytest
+import pytest_asyncio
 from aiohttp import web, ClientSession
 from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
@@ -324,7 +324,7 @@ class ResponsesMockServer(BaseTestServer):
         return self._history
 
 
-@pytest.fixture()
+@pytest_asyncio.fixture()
 async def aresponses(event_loop) -> ResponsesMockServer:
     async with ResponsesMockServer(loop=event_loop) as server:
         yield server
