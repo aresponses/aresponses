@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.6
+        python-version: 3.9
     - name: Install dependencies
       run: |
         python -m pip install --disable-pip-version-check -r .github/workflows/lint-requirements.txt
@@ -26,7 +26,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Install dependencies
       run: |
         python -m pip install --disable-pip-version-check black==20.8b0
@@ -37,7 +37,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        include:
+          - python-version: "3.7"
+            pytest-asyncio-version: "==0.16.0"
+          - python-version: "3.8"
+            pytest-asyncio-version: ">=0.17.0"
+          - python-version: "3.9"
+            pytest-asyncio-version: ">=0.17.0"
+          - python-version: "3.10"
+            pytest-asyncio-version: ">=0.17.0"
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -45,8 +54,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      env:
+        PYTEST_ASYNCIO_VERSION: ${{ matrix.pytest-asyncio-version }}
       run: |
         python -m pip install --disable-pip-version-check -r .github/workflows/test-requirements.txt
+        python -m pip install --disable-pip-version-check pytest-asyncio$PYTEST_ASYNCIO_VERSION
     - name: Test with pytest
       run: |
         pytest
