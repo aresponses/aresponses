@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-python_version = 3.6.6
+python_version = 3.7.12
 venv_prefix = aresponses
 venv_name = $(venv_prefix)-$(python_version)
 pyenv_instructions=https://github.com/pyenv/pyenv#installation
@@ -36,7 +36,7 @@ lint:  ## Run the code linter.
 
 deploy:  ## Deploy the package to pypi.org
 	pip install twine wheel
-	git tag $$(python setup.py -V)
+	-git tag $$(python setup.py -V)
 	git push --tags
 	python setup.py bdist_wheel
 	python setup.py sdist
