@@ -2,7 +2,7 @@ from os import path
 
 from setuptools import setup
 
-__version__ = "2.1.4"
+__version__ = "2.1.5"
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
@@ -23,10 +23,10 @@ setup(
     download_url="https://github.com/circleup/aresponses/tarball/" + __version__,
     keywords=["asyncio", "testing", "responses"],
     classifiers=[
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
     ],
     python_requires=">=3.6",
