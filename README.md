@@ -243,6 +243,12 @@ def loop(event_loop):
 
 ## Changelog
 
+#### 2.1.6
+- fix: incorrect pytest plugin entrypoint name (#72)
+
+#### 2.1.5
+- support asyncio_mode = strict (#68)
+ 
 #### 2.1.4
 - fix: don't assume utf8 request contents
 
