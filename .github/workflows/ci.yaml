@@ -15,7 +15,7 @@ jobs:
         python-version: 3.9
     - name: Install dependencies
       run: |
-        python -m pip install --disable-pip-version-check -r .github/workflows/lint-requirements.txt
+        python -m pip install --disable-pip-version-check -r .github/workflows/ci-requirements.txt
     - name: Lint with flake8
       run: |
         echo "::add-matcher::.github/flake8_matcher.json"
@@ -29,7 +29,7 @@ jobs:
         python-version: 3.9
     - name: Install dependencies
       run: |
-        python -m pip install --disable-pip-version-check black==20.8b0
+        python -m pip install --disable-pip-version-check black
     - name: Autoformatter
       run: |
         black --diff .
@@ -57,7 +57,7 @@ jobs:
       env:
         PYTEST_ASYNCIO_VERSION: ${{ matrix.pytest-asyncio-version }}
       run: |
-        python -m pip install --disable-pip-version-check -r .github/workflows/test-requirements.txt
+        python -m pip install --disable-pip-version-check -r .github/workflows/ci-requirements.txt
         python -m pip install --disable-pip-version-check pytest-asyncio$PYTEST_ASYNCIO_VERSION
     - name: Test with pytest
       run: |
