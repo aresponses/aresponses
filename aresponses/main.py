@@ -10,6 +10,7 @@ try:
 except ImportError:
     # Backward compatability for pytest-asyncio<0.17
     import pytest
+
     asyncio_fixture = pytest.fixture
 
 from aiohttp import web, ClientSession
