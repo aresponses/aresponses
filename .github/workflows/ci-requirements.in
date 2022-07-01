@@ -1,3 +1,11 @@
+coverage
+pytest
+pytest-asyncio
+pytest-randomly
+pytest-cov
+
+# linter deps
+black
 flake8
 flake8-builtins
 flake8-comprehensions

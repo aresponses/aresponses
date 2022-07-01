@@ -14,7 +14,7 @@ init: require_pyenv  ## Setup a dev environment for local development.
 	fi;
 	@pyenv local $(venv_name)
 	@echo -e "\033[0;32m ✔️  🐍 $(venv_name) virtualenv activated \033[0m"
-	pip install --upgrade pip pip-tools -r .github/workflows/lint-requirements.txt -r .github/workflows/test-requirements.txt
+	pip install --upgrade pip pip-tools -r .github/workflows/ci-requirements.txt
 	@echo -e "\nEnvironment setup! ✨ 🍰 ✨ 🐍 \n\nCopy this path to tell PyCharm where your virtualenv is. You may have to click the refresh button in the pycharm file explorer.\n"
 	@echo -e "\033[0;32m"
 	@pyenv which python
@@ -47,8 +47,7 @@ deploy:  ## Deploy the package to pypi.org
 	@echo "Deploy successful! ✨ 🍰 ✨"
 
 requirements:  ## Freeze the requirements.txt file
-	pip-compile setup.py .github/workflows/test-requirements.in --output-file=.github/workflows/test-requirements.txt --upgrade
-	pip-compile setup.py .github/workflows/lint-requirements.in --output-file=.github/workflows/lint-requirements.txt --upgrade
+	pip-compile setup.py .github/workflows/ci-requirements.in --output-file=.github/workflows/ci-requirements.txt --upgrade
 
 require_pyenv:
 	@if ! [ -x "$$(command -v pyenv)" ]; then\
