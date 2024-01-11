@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import aiohttp
@@ -110,8 +111,9 @@ async def test_https(aresponses):
 
 
 @pytest.mark.asyncio
-async def test_context_manager(event_loop):
-    async with aresponses_mod.ResponsesMockServer(loop=event_loop) as arsps:
+async def test_context_manager():
+    loop = asyncio.get_running_loop()
+    async with aresponses_mod.ResponsesMockServer(loop=loop) as arsps:
         arsps.add("foo.com", "/", "get", aresponses_mod.Response(text="hi"))
 
         url = "http://foo.com"
@@ -411,9 +413,10 @@ def _short_recursion_limit():
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("_short_recursion_limit")
-async def test_not_exceeding_recursion_limit(event_loop):
+async def test_not_exceeding_recursion_limit():
+    loop = asyncio.get_running_loop()
     for _ in range(sys.getrecursionlimit()):
-        async with aresponses_mod.ResponsesMockServer(loop=event_loop) as arsps:
+        async with aresponses_mod.ResponsesMockServer(loop=loop) as arsps:
             arsps.add("fake-host", "/", "get", "hello")
             async with aiohttp.ClientSession() as session:
                 async with session.get("http://fake-host"):

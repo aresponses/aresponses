@@ -332,6 +332,7 @@ class ResponsesMockServer(BaseTestServer):
 
 
 @asyncio_fixture()
-async def aresponses(event_loop) -> ResponsesMockServer:
-    async with ResponsesMockServer(loop=event_loop) as server:
+async def aresponses() -> ResponsesMockServer:
+    loop = asyncio.get_running_loop()
+    async with ResponsesMockServer(loop=loop) as server:
         yield server
