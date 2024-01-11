@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-python_version = 3.7.12
+python_version = 3.9.18
 venv_prefix = aresponses
 venv_name = $(venv_prefix)-$(python_version)
 pyenv_instructions=https://github.com/pyenv/pyenv#installation

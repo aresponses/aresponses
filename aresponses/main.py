@@ -192,7 +192,6 @@ class ResponsesMockServer(BaseTestServer):
 
     async def _find_response(self, request):
         for i, (route, response) in enumerate(self._responses):
-
             if not await route.matches(request):
                 continue
 
