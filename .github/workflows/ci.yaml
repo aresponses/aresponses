@@ -34,31 +34,50 @@ jobs:
       run: |
         black --diff .
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.software-versions.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        include:
-          - python-version: "3.7"
-            pytest-asyncio-version: "==0.16.0"
-          - python-version: "3.8"
-            pytest-asyncio-version: ">=0.17.0"
-          - python-version: "3.9"
-            pytest-asyncio-version: ">=0.17.0"
-          - python-version: "3.10"
-            pytest-asyncio-version: ">=0.17.0"
+        software-versions:
+          - {py: "3.7", aiohttp: "==3.1.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.2.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.3.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.4.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.5.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.6.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.7.*", os: "ubuntu-latest"}
+          - {py: "3.7", aiohttp: "==3.8.*", os: "ubuntu-latest"}
+          - {py: "3.8", aiohttp: "==3.6.*", os: "ubuntu-latest"}
+          - {py: "3.8", aiohttp: "==3.7.*", os: "ubuntu-latest"}
+          - {py: "3.8", aiohttp: "==3.8.*", os: "ubuntu-latest"}
+          - {py: "3.8", aiohttp: "==3.9.*", os: "ubuntu-latest"}
+          - { py: "3.9", aiohttp: "==3.6.*" , os: "ubuntu-latest"}
+          - { py: "3.9", aiohttp: "==3.7.*" , os: "ubuntu-latest"}
+          - { py: "3.9", aiohttp: "==3.8.*" , os: "ubuntu-latest"}
+          - { py: "3.9", aiohttp: "==3.9.*" , os: "ubuntu-latest"}
+          - { py: "3.10", aiohttp: "==3.7.*" , os: "ubuntu-latest"}
+          - { py: "3.10", aiohttp: "==3.8.*" , os: "ubuntu-latest"}
+          - { py: "3.10", aiohttp: "==3.9.*" , os: "ubuntu-latest"}
+          - { py: "3.11", aiohttp: "==3.7.*" , os: "ubuntu-latest"}
+          - { py: "3.11", aiohttp: "==3.8.*" , os: "ubuntu-latest"}
+          - { py: "3.11", aiohttp: "==3.9.*" , os: "ubuntu-latest"}
+          - { py: "3.12", aiohttp: "==3.7.*" , os: "ubuntu-latest"}
+          - { py: "3.12", aiohttp: "==3.9.*" , os: "ubuntu-latest"}
+          - { py: "3.12", aiohttp: ">=3.9" , os: "ubuntu-latest"}
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.software-versions.py }}
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: ${{ matrix.software-versions.py }}
     - name: Install dependencies
       env:
-        PYTEST_ASYNCIO_VERSION: ${{ matrix.pytest-asyncio-version }}
+        AIOHTTP_VERSION: ${{ matrix.software-versions.aiohttp }}
+        PIP_DISABLE_PIP_VERSION_CHECK: 1
       run: |
-        python -m pip install --disable-pip-version-check -r .github/workflows/ci-requirements.txt
-        python -m pip install --disable-pip-version-check pytest-asyncio$PYTEST_ASYNCIO_VERSION
+        python -m pip install -r .github/workflows/ci-requirements.in
+        python -m pip install aiohttp$AIOHTTP_VERSION
+        python -m pip install -e .
     - name: Test with pytest
       run: |
         pytest
