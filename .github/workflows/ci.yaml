@@ -61,8 +61,9 @@ jobs:
       env:
         PYTEST_ASYNCIO_VERSION: ${{ matrix.pytest-asyncio-version }}
       run: |
-        python -m pip install --disable-pip-version-check -r .github/workflows/ci-requirements.txt
+        python -m pip install --disable-pip-version-check -r .github/workflows/ci-requirements.in
         python -m pip install --disable-pip-version-check pytest-asyncio$PYTEST_ASYNCIO_VERSION
+        python -m pip install .
     - name: Test with pytest
       run: |
         pytest
