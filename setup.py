@@ -29,8 +29,11 @@ setup(
         "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
     ],
-    python_requires=">=3.6",
-    install_requires=["aiohttp==3.*,>=3.1.0", "pytest-asyncio"],
+    python_requires=">=3.8",
+    install_requires=[
+        "aiohttp==3.*,>=3.1.0",
+        "pytest-asyncio>=0.17.0"
+    ],
     # the following makes a plugin available to pytest
     entry_points={"pytest11": ["aresponses = aresponses.main"]},
 )
