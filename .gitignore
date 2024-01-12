@@ -13,3 +13,5 @@ build/
 .envrc
 .coverage
 pip-wheel-metadata/
+notes/**
+notes
