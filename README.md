@@ -243,6 +243,16 @@ def loop(event_loop):
 
 ## Changelog
 
+#### 3.0.0
+- fix: start using `asyncio.get_running_loop()` instead of `event_loop` per the error:
+    ```
+    PytestDeprecationWarning: aresponses is asynchronous and explicitly requests the "event_loop" fixture. 
+    Asynchronous fixtures and test functions should use "asyncio.get_running_loop()" instead.
+    ```
+- drop support for python 3.6
+- add comprehensive matrix testing of all supported python and aiohttp versions
+- tighten up the setup.py requirements
+
 #### 2.1.6
 - fix: incorrect pytest plugin entrypoint name (#72)
 
