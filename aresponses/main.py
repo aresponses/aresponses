@@ -202,24 +202,30 @@ class ResponsesMockServer(BaseTestServer):
             else:
                 self._responses[i] = (route, copy(response))
 
-            if callable(response):
-                if asyncio.iscoroutinefunction(response):
-                    response = await response(request)
-                else:
-                    response = response(request)
-
-            elif isinstance(response, str):
-                response = self.Response(body=response)
-            elif isinstance(response, (dict, list)):
-                response = json_response(data=response)
-
             if i > 0 and self._first_unordered_route is None:
                 self._first_unordered_route = route
 
+            response = await self._prepare_response(request, response)
             return route, response
 
         self._unmatched_requests.append(request)
         return None, None
+
+    async def _prepare_response(self, request, response):
+        """Prepare response, depends on type."""
+        if asyncio.iscoroutinefunction(response):
+            return await response(request)
+
+        if callable(response):
+            return response(request)
+
+        if isinstance(response, str):
+            return self.Response(body=response)
+
+        if isinstance(response, (dict, list)):
+            return json_response(data=response)
+
+        return response
 
     async def passthrough(self, request):
         """Make non-mocked network request"""
