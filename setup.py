@@ -37,9 +37,14 @@ setup(
         'aiohttp>=3.6.0; python_version>="3.8" and python_version<"3.10"',
         'aiohttp>=3.7.0; python_version>="3.10" and python_version<"3.12"',
         'aiohttp>=3.7.0,!=3.8.*; python_version>="3.12"',
-        'pytest-asyncio==0.16.0; python_version<"3.7"',
-        'pytest-asyncio>=0.17.0; python_version>="3.7"',
+        'pytest'
     ],
+    extras_require={
+        'pytest-asyncio': [
+            'pytest-asyncio==0.16.0; python_version<"3.7"',
+            'pytest-asyncio>=0.17.0; python_version>="3.7"',
+        ]
+    },
     # the following makes a plugin available to pytest
     entry_points={"pytest11": ["aresponses = aresponses.main"]},
 )

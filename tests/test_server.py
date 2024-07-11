@@ -16,7 +16,6 @@ from aresponses.errors import (
 )
 
 
-@pytest.mark.asyncio
 async def test_foo(aresponses):
     # text as response (defaults to status 200 response)
     aresponses.add("foo.com", "/", "get", "hi there!!")
@@ -62,7 +61,6 @@ async def test_foo(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_fixture(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
 
@@ -75,7 +73,6 @@ async def test_fixture(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_body_match(aresponses):
     aresponses.add(
         "foo.com",
@@ -97,7 +94,6 @@ async def test_body_match(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_https(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
 
@@ -110,7 +106,6 @@ async def test_https(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_context_manager():
     loop = asyncio.get_running_loop()
     async with aresponses_mod.ResponsesMockServer(loop=loop) as arsps:
@@ -125,7 +120,6 @@ async def test_context_manager():
     arsps.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_bad_redirect(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi", status=301))
     url = "http://foo.com"
@@ -136,7 +130,6 @@ async def test_bad_redirect(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_regex(aresponses):
     aresponses.add(
         aresponses.ANY, aresponses.ANY, aresponses.ANY, aresponses.Response(text="hi")
@@ -160,7 +153,6 @@ async def test_regex(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_callable(aresponses):
     def handler(request):
         return aresponses.Response(body=request.host)
@@ -180,7 +172,6 @@ async def test_callable(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_raw_response(aresponses):
     raw_response = b"""HTTP/1.1 200 OK\r
 Date: Tue, 26 Dec 2017 05:47:50 GMT\r
@@ -202,7 +193,6 @@ Date: Tue, 26 Dec 2017 05:47:50 GMT\r
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_querystring(aresponses):
     aresponses.add("foo.com", "/path", "get", aresponses.Response(text="hi"))
 
@@ -229,7 +219,6 @@ async def test_querystring(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_querystring_not_match(aresponses):
     aresponses.add(
         "foo.com",
@@ -274,7 +263,6 @@ async def test_querystring_not_match(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_passthrough(aresponses):
     aresponses.add("httpstat.us", "/200", "get", aresponses.passthrough)
 
@@ -287,7 +275,6 @@ async def test_passthrough(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_not_called(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"))
     with pytest.raises(UnusedRouteError):
@@ -297,7 +284,6 @@ async def test_failure_not_called(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_no_match(aresponses):
     async with aiohttp.ClientSession() as session:
         try:
@@ -312,7 +298,6 @@ async def test_failure_no_match(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_bad_ordering(aresponses):
     aresponses.add("foo.com", "/a", "get", aresponses.Response(text="hi"))
     aresponses.add("foo.com", "/b", "get", aresponses.Response(text="hi"))
@@ -332,7 +317,6 @@ async def test_failure_bad_ordering(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_failure_not_called_enough_times(aresponses):
     aresponses.add("foo.com", "/", "get", aresponses.Response(text="hi"), repeat=2)
 
@@ -344,7 +328,6 @@ async def test_failure_not_called_enough_times(aresponses):
         aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_history(aresponses):
     aresponses.add(response=aresponses.Response(text="hi"), repeat=2)
 
@@ -361,7 +344,6 @@ async def test_history(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_history_post(aresponses):
     """Ensure the request contents exist in the history"""
     aresponses.add(method_pattern="POST", response={"some": "response"})
@@ -381,7 +363,6 @@ async def test_history_post(aresponses):
     aresponses.assert_plan_strictly_followed()
 
 
-@pytest.mark.asyncio
 async def test_history_post_binary(aresponses):
     """
     Ensure the request contents exist in the history
@@ -411,7 +392,6 @@ def _short_recursion_limit():
     sys.setrecursionlimit(old_limit)
 
 
-@pytest.mark.asyncio
 @pytest.mark.usefixtures("_short_recursion_limit")
 async def test_not_exceeding_recursion_limit():
     loop = asyncio.get_running_loop()

@@ -2,11 +2,18 @@ import aiohttp
 import pytest
 from aiohttp import web
 
+try:
+    from pytest_asyncio import fixture
+    from aiohttp.pytest_plugin import aiohttp_client
 
-@pytest.fixture()
-def loop(event_loop):
-    """replace aiohttp loop fixture with pytest-asyncio fixture"""
-    return event_loop
+    @fixture()
+    def loop(event_loop):
+        """replace aiohttp loop fixture with pytest-asyncio fixture"""
+        return event_loop
+
+except ImportError:
+    # aiohttp_client already installed with aiohttp.pytest_plugin otherwise
+    pass
 
 
 def make_app():
@@ -32,14 +39,12 @@ async def get_ip_address(protocol):
             return ip
 
 
-@pytest.mark.asyncio
 async def test_app_simple_endpoint(aiohttp_client):
     client = await aiohttp_client(make_app())
     r = await client.get("/constant")
     assert (await r.text()) == "42"
 
 
-@pytest.mark.asyncio
 async def test_app_simple_endpoint_with_aresponses(aiohttp_client, aresponses):
     """
     when testing your own aiohttp server you must setup passthrough to it
@@ -54,7 +59,6 @@ async def test_app_simple_endpoint_with_aresponses(aiohttp_client, aresponses):
     assert (await r.text()) == "42"
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("protocol", ["http", "https"])
 async def test_app_with_subrequest_using_aresponses(
     aiohttp_client, aresponses, protocol
