@@ -5,14 +5,6 @@ import re
 from copy import copy
 from typing import List, NamedTuple
 
-try:
-    from pytest_asyncio import fixture as asyncio_fixture
-except ImportError:
-    # Backward compatability for pytest-asyncio<0.17
-    import pytest
-
-    asyncio_fixture = pytest.fixture
-
 from aiohttp import web, ClientSession
 from aiohttp.client_reqrep import ClientRequest
 from aiohttp.connector import TCPConnector
@@ -22,6 +14,7 @@ from aiohttp.web_request import BaseRequest
 from aiohttp.web_response import StreamResponse, json_response
 from aiohttp.web_runner import ServerRunner
 from aiohttp.web_server import Server
+import pytest
 
 from aresponses.errors import (
     NoRouteFoundError,
@@ -336,8 +329,18 @@ class ResponsesMockServer(BaseTestServer):
         return self._history
 
 
-@asyncio_fixture()
-async def aresponses() -> ResponsesMockServer:
-    loop = asyncio.get_running_loop()
-    async with ResponsesMockServer(loop=loop) as server:
-        yield server
+try:
+    from pytest_asyncio import fixture
+
+    @fixture()
+    async def aresponses() -> ResponsesMockServer:
+        loop = asyncio.get_running_loop()
+        async with ResponsesMockServer(loop=loop) as server:
+            yield server
+
+except ImportError:
+
+    @pytest.fixture()
+    async def aresponses(loop) -> ResponsesMockServer:
+        async with ResponsesMockServer(loop=loop) as server:
+            yield server

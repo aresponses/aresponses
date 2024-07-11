@@ -78,6 +78,10 @@ jobs:
         python -m pip install -r .github/workflows/ci-requirements.in
         python -m pip install aiohttp$AIOHTTP_VERSION
         python -m pip install -e .
-    - name: Test with pytest
+    - name: Test with pytest-asyncio plugin
       run: |
+        pytest -p no:aiohttp.pytest_plugin
+    - name: Test with pytest aiohttp plugin
+      run: |
+        python -m pip uninstall pytest-asyncio -y
         pytest
