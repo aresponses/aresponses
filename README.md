@@ -65,7 +65,7 @@ In aresponses 1.x requests that didn't match a route stopped the event
 loop and thus forced an exception.  In aresponses >2.x it's required to
 make assertions at the end of the test.
 
-There are three assertions functions provided:
+There are three assertion functions provided:
 - `aresponses.assert_no_unused_routes` Raises `UnusedRouteError` if all
 the routes defined were not used up.
 - `aresponses.assert_called_in_order` - Raises `UnorderedRouteCallError`
@@ -87,7 +87,7 @@ be either strings (exact match) or regular expressions.
 The repeat argument permits a route to be used multiple times.
 
 If you want to just blanket mock a service, without concern for how many
-times its called you could set repeat to a large number and not call
+times its called, you could set repeat to a large number and not call
 `aresponses.assert_plan_strictly_followed` or
 `arespones.assert_no_unused_routes`.
 
@@ -128,7 +128,7 @@ async def test_json(aresponses):
 #### Custom Handler
 
 Custom functions can be used for whatever other complex logic is
-desired. In example below the handler is set to repeat infinitely
+desired. In the example below, the handler is set to repeat infinitely
 and always return 500.
 
 ```python
@@ -203,7 +203,7 @@ async def test_foo(event_loop):
 
 #### working with [pytest-aiohttp](https://github.com/aio-libs/pytest-aiohttp)
 
-If you need to use aresponses together with pytest-aiohttp, you should re-initialize main aresponses fixture with `loop` fixture
+If you need to use aresponses together with pytest-aiohttp, you should re-initialize the main aresponses fixture with the `loop` fixture
 ```python
 from aresponses import ResponsesMockServer
 
