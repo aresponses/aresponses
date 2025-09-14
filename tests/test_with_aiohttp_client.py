@@ -1,12 +1,15 @@
+import asyncio
+
 import aiohttp
 import pytest
+import pytest_asyncio
 from aiohttp import web
 
 
-@pytest.fixture()
-def loop(event_loop):
-    """replace aiohttp loop fixture with pytest-asyncio fixture"""
-    return event_loop
+@pytest_asyncio.fixture()
+async def loop():
+    """Replace aiohttp loop fixture."""
+    return asyncio.get_running_loop()
 
 
 def make_app():
