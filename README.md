@@ -179,18 +179,21 @@ async def test_history(aresponses):
 
 #### Context manager usage
 ```python
+import asyncio
+
 import aiohttp
 import pytest
 import aresponses
 
 
 @pytest.mark.asyncio
-async def test_foo(event_loop):
-    async with aresponses.ResponsesMockServer(loop=event_loop) as arsps:
+async def test_foo():
+    loop = asyncio.get_running_loop()
+    async with aresponses.ResponsesMockServer(loop=loop) as arsps:
         arsps.add('foo.com', '/', 'get', 'hi there!!')
         arsps.add(arsps.ANY, '/', 'get', arsps.Response(text='hey!'))
         
-        async with aiohttp.ClientSession(loop=event_loop) as session:
+        async with aiohttp.ClientSession(loop=loop) as session:
             async with session.get('http://foo.com') as response:
                 text = await response.text()
                 assert text == 'hi'
@@ -216,10 +219,12 @@ async def aresponses(loop):
 If you're trying to use the `aiohttp_client` test fixture then you'll need to mock out the aiohttp `loop` fixture
 instead:
 ```python
-@pytest.fixture
-def loop(event_loop):
-    """replace aiohttp loop fixture with pytest-asyncio fixture"""
-    return event_loop
+import pytest_asyncio
+
+@pytest_asyncio.fixture
+async def loop():
+    """Replace aiohttp loop fixture."""
+    return asyncio.get_running_loop()
 ```
 
 ## Contributing
