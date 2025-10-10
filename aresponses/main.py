@@ -129,7 +129,12 @@ class ResponsesMockServer(BaseTestServer):
         super().__init__(scheme=scheme, host=host, **kwargs)
 
     async def _make_runner(self, debug=True, **kwargs):
-        srv = Server(self._handler, loop=self._loop, debug=True, **kwargs)
+        # prefer not passing deprecated loop argument on newer aiohttp
+        try:
+            srv = Server(self._handler, debug=True, **kwargs)
+        except TypeError:
+            # Fallback for older aiohttp that still expects loop
+            srv = Server(self._handler, loop=self._loop, debug=True, **kwargs)
         return ServerRunner(srv, debug=debug, **kwargs)
 
     async def _handler(self, request):
@@ -261,7 +266,11 @@ class ResponsesMockServer(BaseTestServer):
                 return response
 
     async def __aenter__(self) -> "ResponsesMockServer":
-        await self.start_server(loop=self._loop)
+        # newer aiohttp deprecates passing loop
+        try:
+            await self.start_server()
+        except TypeError:
+            await self.start_server(loop=self._loop)
 
         self._old_resolver_mock = TCPConnector._resolve_host
 
