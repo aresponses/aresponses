@@ -5,6 +5,8 @@ import aiohttp
 import pytest
 import sys
 from aiohttp import ServerDisconnectedError
+from aiohttp.test_utils import TestServer as AiohttpTestServer
+from multidict import CIMultiDict
 
 import aresponses as aresponses_mod
 
@@ -106,6 +108,79 @@ async def test_https(aresponses):
         async with session.get(url) as response:
             text = await response.text()
     assert text == "hi"
+
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("scheme", ["http", "https"])
+@pytest.mark.parametrize("header_factory", [list, CIMultiDict])
+@pytest.mark.parametrize("header_name", ["X-Value", "x-value"])
+async def test_repeated_request_headers(
+    aresponses, scheme, header_factory, header_name
+):
+    def handler(request):
+        return aiohttp.web.json_response(
+            {
+                "values": request.headers.getall("X-Value"),
+                "ssl": request.headers.getall("AResponsesIsSSL"),
+            }
+        )
+
+    aresponses.add("foo.com", "/", "get", handler)
+    headers = header_factory(
+        [
+            (header_name, "first"),
+            (header_name, "second"),
+            ("AResponsesIsSSL", "caller"),
+            ("aresponsesisssl", "other"),
+        ]
+    )
+    original_headers = (
+        list(headers.items()) if hasattr(headers, "items") else headers[:]
+    )
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"{scheme}://foo.com", headers=headers) as response:
+            assert await response.json() == {
+                "values": ["first", "second"],
+                "ssl": ["1" if scheme == "https" else ""],
+            }
+
+    actual_headers = list(headers.items()) if hasattr(headers, "items") else headers
+    assert actual_headers == original_headers
+    aresponses.assert_plan_strictly_followed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("header_factory", [list, CIMultiDict])
+@pytest.mark.parametrize("header_name", ["X-Value", "x-value"])
+async def test_passthrough_repeated_request_headers(
+    aresponses, header_factory, header_name
+):
+    async def handler(request):
+        return aiohttp.web.json_response(
+            {
+                "values": request.headers.getall("X-Value"),
+                "ssl": request.headers.getall("AResponsesIsSSL", []),
+                "body": await request.text(),
+            }
+        )
+
+    app = aiohttp.web.Application()
+    app.router.add_post("/", handler)
+    async with AiohttpTestServer(app) as server:
+        aresponses.add(response=aresponses.passthrough)
+        headers = header_factory([(header_name, "first"), (header_name, "second")])
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                server.make_url("/"), headers=headers, data="body"
+            ) as response:
+                assert await response.json() == {
+                    "values": ["first", "second"],
+                    "ssl": [],
+                    "body": "body",
+                }
 
     aresponses.assert_plan_strictly_followed()
 

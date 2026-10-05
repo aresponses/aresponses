@@ -235,6 +235,8 @@ class ResponsesMockServer(BaseTestServer):
                 return self._old_resolver_mock(slf, *args, **kwargs)
 
         class DirectClientRequest(ClientRequest):
+            __init__ = self._old_init
+
             def is_ssl(slf) -> bool:  # noqa
                 return slf._aresponses_direct_is_ssl()
 
@@ -244,7 +246,8 @@ class ResponsesMockServer(BaseTestServer):
             scheme="https" if request.headers["AResponsesIsSSL"] else "http"
         )
 
-        headers = {k: v for k, v in request.headers.items() if k != "AResponsesIsSSL"}
+        headers = request.headers.copy()
+        del headers["AResponsesIsSSL"]
 
         async with ClientSession(
             connector=connector, request_class=DirectClientRequest
@@ -294,7 +297,7 @@ class ResponsesMockServer(BaseTestServer):
             self._old_init(_self, *largs, **kwargs)
 
             is_ssl = "1" if self._old_is_ssl(_self) else ""
-            _self.update_headers({**_self.headers, "AResponsesIsSSL": is_ssl})
+            _self.headers["AResponsesIsSSL"] = is_ssl
 
         ClientRequest.__init__ = new_init
 
